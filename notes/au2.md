@@ -2,7 +2,7 @@
 
 A equação do raio é dada por 
 
-$$P(t) = P_0 + t\bold{d}$$
+$$P(t) = P_0 + t \cdot d$$
 
 - Em que $P_0$ é o ponto de partida do raio.
 - ***d*** é o vetor que indica a direção e o sentido do raio.
@@ -64,11 +64,11 @@ Analisando os valores de $\Delta = b^2 - 4ac$ temos que
 - Se $\Delta < 0$, não o raio não intersecta com a esfera.
 - Se $\Delta = 0$, o raio intersecta com a esfera em um ponto.
 - Se $\Delta \geq 0$, o raio intersecta com a esfera em 2 pontos.
-±
+
 Lembrando que para equações do segundo grau, temos
 
 $$t_{int} = \frac{-b\pm \sqrt{b^2-4ac}}{a}$$
-
+    
 Por fim, basta substituir o(s) valor(es) de $t_{int}$ na equação do plano, obtendo
 
 $$P(t_{int}) = P_0 + t_{int}d$$
