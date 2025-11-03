@@ -15,6 +15,12 @@ class luz(ABC):
         """
         pass
 
+class LuzAmbiente(luz):
+    def __init__(self, intensidade):
+        super().__init__(intensidade)
+    def dir_intensi(self, ponto):
+        pass
+    
 class LuzPontual(luz):
     def __init__(self, intensidade, posicao):
         """
@@ -32,4 +38,3 @@ class LuzPontual(luz):
         I = self.intensidade
 
         return l, I
-    

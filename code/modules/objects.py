@@ -7,12 +7,13 @@ class Ray:
         self.direcao /= np.linalg.norm(self.direcao)
 
 class Esfera:
-    def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, m=20):
+    def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, Ka =0.2 ,m=20):
         self.centro = np.array(centro, dtype=float)
         self.raio = raio
         self.cor = np.array(cor, dtype=float) / 255.0
         self.Kd = Kd
         self.Ks = Ks
+        self.Ka = Ka
         self.m = m
 
     def intersect(self, ray: Ray):
@@ -40,9 +41,28 @@ class Esfera:
         ponto = ray.origem + t * ray.direcao
         normal = (ponto - self.centro) / self.raio
         return {"t": t, "ponto": ponto, "normal": normal, "cor": self.cor,
-                "Kd": self.Kd, "Ks": self.Ks, "m": self.m}
+                "Kd": self.Kd, "Ks": self.Ks, "Ka": self.Ka, "m": self.m}
 
 
+class Plano():
+    def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1):
+        self.pontoPi = np.array(pontoPi)
+        self.normalPlano = np.array(normalPlano)
+        self.cor = np.array(cor, dtype=float) / 255.0
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ka = Ka
+        self.m = m
+
+    def intersect(self, ray:Ray):
+        w = ray.origem - self.pontoPi
+        ti = - (np.dot(w,self.normalPlano))/(np.dot(ray.direcao, self.normalPlano))
+        if ti < 0:
+            return None
+        pontoI = ray.origem + ti * ray.direcao
+        return {"t":ti, "ponto": pontoI, "normal": self.normalPlano, "cor": self.cor,
+                "Kd": self.Kd, "Ks": self.Ks,"Ka": self.Ka ,"m": self.m}
+        
 class Cilindro():
     def __init__(self):
         pass
