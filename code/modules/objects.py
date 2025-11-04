@@ -73,9 +73,74 @@ class Plano(SimpleObject):
                 "Kd": self.Kd, "Ks": self.Ks,"Ka": self.Ka ,"m": self.m}
         
 class Cilindro(SimpleObject):
-    def __init__(self):
-        pass
+    def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
+        self.centroBase = np.array(centroBase)
+        self.raioBase = raioBase
+        self.altura = altura
+        self.vetorDir = np.array(vetorDir)
+        self.vetorDir /= np.linalg.norm(self.vetorDir) 
+        self.cor = np.array(cor, dtype=float) / 255.0
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ka = Ka
+        self.m = m
+        
+    def intersect(self, ray: Ray):
+        dc = self.vetorDir 
+        dr = ray.direcao 
+        w = ray.origem - self.centroBase
 
+        M = np.eye(3) - np.outer(dc, dc)
+
+        a = dr @ M @ dr
+        b = 2 * (w @ M @ dr)
+        c = w @ M @ w - self.raioBase**2
+
+        delta = b**2 - 4 * a * c
+        if delta < 0:
+            return None
+
+        sqrt_delta = np.sqrt(delta)
+        t_candidates = [(-b - sqrt_delta) / (2 * a), (-b + sqrt_delta) / (2 * a)]
+        t = None
+
+        for cand in t_candidates:
+            if cand <= 0:
+                continue
+
+            # sI é o vetor do centro da base até o ponto de interseção
+            sI = w + cand * dr
+            res = np.dot(sI, dc)  # projeção ao longo do eixo do cilindro
+
+            # Verifica se o ponto está entre as tampas
+            if 0 <= res <= self.altura:
+                t = cand
+                break
+
+        if t is None:
+            return None
+
+ 
+        ponto = ray.origem + t * dr
+
+        # recomputa sI e rI
+        sI = w + t * dr
+        res = np.dot(sI, dc)
+        rI = sI - res * dc  
+        normal = rI / np.linalg.norm(rI)
+
+        return {
+            "t": t,
+            "ponto": ponto,
+            "normal": normal,
+            "Kd": self.Kd,
+            "Ks": self.Ks,
+            "Ka": self.Ka,
+            "m": self.m,
+            "cor": self.cor
+        }
+
+    
 class Cone(SimpleObject):
     def __init__(self):
         pass
