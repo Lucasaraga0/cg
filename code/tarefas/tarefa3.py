@@ -41,12 +41,12 @@ m_fundo = 1
 planoFundo = Plano(pontoPi= pontoFundo, normalPlano= normalFundo, cor=corFundo, Kd= Kd_fundo, Ks= Ke_fundo, Ka= Ka_fundo, m= m_fundo)
 
 # luz pontual 
-intensidadePontual = np.array([0.7,0.7,0.7])
-posicaoPontual = np.array([0, 0.6, -0.3])
+intensidadePontual = np.array([0.5,0.5,0.5])
+posicaoPontual = np.array([80, 120, -50])
 luzPontual = LuzPontual(intensidade=intensidadePontual, posicao= posicaoPontual)
 
 # luz ambiente
-intensidadeAmbiente = np.array([0.3,0.3,0.3])
+intensidadeAmbiente = np.array([0.8,0.8,0.8])
 luzAmbiente = LuzAmbiente(intensidadeAmbiente)
 
 # window
@@ -96,7 +96,9 @@ for i in range(n_lin):
             view_dir = -raio.direcao
             view_dir /= np.linalg.norm(view_dir)
             Kd, Ks, Ka ,m = intersec["Kd"], intersec["Ks"], intersec["Ka"] ,intersec["m"]
-            I = calcular_iluminacao(P, normal, view_dir, luzPontual, Kd, Ks, Ka, luzAmbiente.intensidade ,m)
+            #I = calcular_iluminacao(P, normal, view_dir, luzPontual, Kd, Ks, Ka, luzAmbiente.intensidade ,m)
+            I = calcular_iluminacao(P, normal, view_dir, luzPontual, Kd, Ks, Ka, luzAmbiente.intensidade, m, cenario)
+
             color = intersec["cor"]   
             image[i, j] = np.clip(color * I, 0, 1)
         else:

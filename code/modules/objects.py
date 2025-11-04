@@ -1,4 +1,5 @@
 import numpy as np
+from abc import ABC, abstractmethod
 
 class Ray:
     def __init__(self, origem, direcao):
@@ -6,7 +7,15 @@ class Ray:
         self.direcao = np.array(direcao, dtype=float)
         self.direcao /= np.linalg.norm(self.direcao)
 
-class Esfera:
+class SimpleObject(ABC):
+    def __init__(self):
+        super().__init__()
+    
+    @abstractmethod
+    def intersect(self, ray):
+        pass
+
+class Esfera(SimpleObject):
     def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, Ka =0.2 ,m=20):
         self.centro = np.array(centro, dtype=float)
         self.raio = raio
@@ -44,7 +53,7 @@ class Esfera:
                 "Kd": self.Kd, "Ks": self.Ks, "Ka": self.Ka, "m": self.m}
 
 
-class Plano():
+class Plano(SimpleObject):
     def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1):
         self.pontoPi = np.array(pontoPi)
         self.normalPlano = np.array(normalPlano)
@@ -63,10 +72,10 @@ class Plano():
         return {"t":ti, "ponto": pontoI, "normal": self.normalPlano, "cor": self.cor,
                 "Kd": self.Kd, "Ks": self.Ks,"Ka": self.Ka ,"m": self.m}
         
-class Cilindro():
+class Cilindro(SimpleObject):
     def __init__(self):
         pass
 
-class Cone():
+class Cone(SimpleObject):
     def __init__(self):
         pass

@@ -56,6 +56,7 @@ image = np.zeros((n_lin, n_col, 3), dtype=float)
 luz = LuzPontual(intensidade=(0.7, 0.7, 0.7), posicao=(0, 0, 0))
 
 esfera = Esfera(centro= centro_esf, raio= r_esfera, cor= cor_esf)
+cenario = [esfera]
 
 for i in range(n_lin):
     for j in range(n_col):
@@ -70,7 +71,7 @@ for i in range(n_lin):
             view_dir = -raio.direcao
             view_dir /= np.linalg.norm(view_dir)
             Kd, Ks, m = intersec["Kd"], intersec["Ks"], intersec["m"]
-            I = calcular_iluminacao(P, normal, view_dir, luz, Kd, Ks, m)
+            I = calcular_iluminacao(P, normal, view_dir, luz, Kd, Ks,Ka= 0,LuzAmb=0,m = m, objetos= cenario)
             color = intersec["cor"]   
             image[i, j] = np.clip(color * I, 0, 1)
         else:
