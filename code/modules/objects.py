@@ -49,9 +49,10 @@ class Esfera(SimpleObject):
 
         ponto = ray.origem + t * ray.direcao
         normal = (ponto - self.centro) / self.raio
-        return {"t": t, "ponto": ponto, "normal": normal, "cor": self.cor,
-                "Kd": self.Kd, "Ks": self.Ks, "Ka": self.Ka, "m": self.m}
-
+        return {"t": t, 
+                "ponto": ponto, 
+                "normal": normal, 
+                "obj":self}
 
 class Plano(SimpleObject):
     def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1):
@@ -69,8 +70,10 @@ class Plano(SimpleObject):
         if ti < 0:
             return None
         pontoI = ray.origem + ti * ray.direcao
-        return {"t":ti, "ponto": pontoI, "normal": self.normalPlano, "cor": self.cor,
-                "Kd": self.Kd, "Ks": self.Ks,"Ka": self.Ka ,"m": self.m}
+        return {"t":ti, 
+                "ponto": pontoI, 
+                "normal": self.normalPlano, 
+                "obj": self}
         
 class Cilindro(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
@@ -133,14 +136,73 @@ class Cilindro(SimpleObject):
             "t": t,
             "ponto": ponto,
             "normal": normal,
-            "Kd": self.Kd,
-            "Ks": self.Ks,
-            "Ka": self.Ka,
-            "m": self.m,
-            "cor": self.cor
+            "obj": self
         }
 
     
 class Cone(SimpleObject):
-    def __init__(self):
-        pass
+    def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
+        self.centroBase = np.array(centroBase)
+        self.raioBase = raioBase
+        self.altura = altura
+        self.vetorDir = vetorDir
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
+        self.cor = np.array(cor, dtype= float)/ 255.0
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ka = Ka
+        self.m = m
+    
+    def intersect(self, ray: Ray):
+        dc = self.vetorDir 
+        H = self.altura
+        dr = ray.direcao 
+        w = ray.origem - self.centroBase
+
+        M = np.eye(3) - np.outer(dc, dc)
+        M_bar = np.outer(dc,dc)
+        M_ast = M_bar - ((H/self.raioBase)**2) * M
+        
+        a = dr.T @ M_ast @ dr
+        b = 2 * w.T @ M_ast @ dr - 2 * H * dr.T @ dc
+        c = w.T @ M_ast @ w - 2 * H * w.T @ dc + H**2
+
+        delta =  b**2 - 4*a*c
+        
+        if delta < 0:
+            return None
+        
+        sqrt_delta = np.sqrt(delta)
+        t_candidates = [(-b - sqrt_delta) / (2 * a), (-b + sqrt_delta) / (2 * a)]
+        t = None
+
+        for cand in t_candidates:
+            if cand <= 0:
+                continue
+
+            # sI é o vetor do centro da base até o ponto de interseção
+            sI = w + cand * dr
+            res = np.dot(sI, dc)  # projeção ao longo do eixo do cilindro
+
+            # Verifica se o ponto está entre as tampas
+            if 0 <= res <= self.altura:
+                t = cand
+                break
+
+        if t is None:
+            return None
+        
+        ponto = ray.origem + t * dr
+
+        # recomputa sI e rI
+        sI = w + t * dr
+        res = np.dot(sI, dc)
+        rI = sI - res * dc  
+        normal = rI / np.linalg.norm(rI)
+
+        return {
+            "t": t,
+            "ponto": ponto,
+            "normal": normal,
+            "obj": self
+        }

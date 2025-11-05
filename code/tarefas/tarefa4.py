@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 import sys
-from modules.objects import Esfera, Ray, Plano, Cilindro
+from modules.objects import Esfera, Ray, Plano, Cilindro, Cone
 from modules.light import LuzPontual, LuzAmbiente
 from modules.utils import calcular_iluminacao, cenario_intersect
 
@@ -13,18 +13,16 @@ centro_jan = np.array([0.0, 0.0, -DJanela])
 
 # esfera 
 r_esfera = 40
-centro_esf = np.array([0,0, -100])
+centro_esf = np.array([0,0,-100])
 cor_esf = np.array([255, 0, 0], dtype= float)
 Kd_esf = Ke_esf = Ka_esf = np.array([0.7, 0.2, 0.2])
 m_esf = 10
-
 esfera = Esfera(centro= centro_esf, raio= r_esfera, cor= cor_esf, Kd= Kd_esf, Ks= Ke_esf, Ka= Ka_esf, m = m_esf)
 
 #plano do chao 
 pontoChao = np.array([0, -r_esfera, 0])
 normalChao = np.array([0,1,0], dtype= float)
 corChao = np.array([0, 255, 0], dtype= float)
-
 Kd_chao = Ka_chao = np.array([0.2,0.7,0.2])
 Ke_chao = np.array([0,0,0])
 m_chao = 1
@@ -34,7 +32,6 @@ planoChao = Plano(pontoPi= pontoChao, normalPlano= normalChao, cor= corChao, Kd=
 pontoFundo = np.array([0,0,-200])
 normalFundo = np.array([0,0,1], dtype= float)
 corFundo = np.array([0,0,255])
-
 Kd_fundo = Ka_fundo = np.array([0.3,0.3,0.7])
 Ke_fundo = np.array([0,0,0])
 m_fundo = 1
@@ -43,12 +40,21 @@ planoFundo = Plano(pontoPi= pontoFundo, normalPlano= normalFundo, cor=corFundo, 
 # cilindro
 centroCil = centro_esf
 rCil = 1/3 * r_esfera
-AltCil = 3 * r_esfera
+altCil = 3 * r_esfera
 temp = -1/np.sqrt(3)
-dirCil = (temp, -temp, temp)
-KdCil, KeCil, KaCil = np.array([0.2,0.3,0.8])
-corCil = np.array([255,0,255])
-cilindro = Cilindro(centroBase= centroCil, raioBase= rCil, altura= AltCil, vetorDir= dirCil, cor = corCil, Kd= KdCil, Ks= KeCil, Ka= KaCil, m= m_esf)
+dirCil = np.array([temp, -temp, temp])
+KdCil = KeCil =  KaCil = np.array([0.2,0.3,0.8])
+corCil = np.array([128,0,128])
+cilindro = Cilindro(centroBase= centroCil, raioBase= rCil, altura= altCil, vetorDir= dirCil, cor = corCil, Kd= KdCil, Ks= KeCil, Ka= KaCil, m= m_esf)
+
+# cone
+centroCone = centroCil + (dirCil * altCil) # topo do cilindro
+rCone = 1.5 * r_esfera
+altCone = 1/3 * rCone
+dirCone = dirCil
+KdCone = KeCone = KaCone = np.array([0.8, 0.3, 0.2])
+corCone = np.array([255,165,0])
+cone = Cone(centroBase= centroCone, raioBase= rCone, altura= altCone, vetorDir = dirCone, cor = corCone, Kd= KdCone, Ks= KeCone, Ka= KaCone, m = m_esf )
 
 # luz pontual 
 intensidadePontual = np.array([0.7,0.7,0.7])
@@ -71,7 +77,7 @@ window_h = int(Hjanela * PIXELS_PER_CM)
 
 pygame.init()
 window = pygame.display.set_mode((window_w, window_h))
-pygame.display.set_caption("Esfera com cilindro")
+pygame.display.set_caption("Esfera com cilindro e cone")
 clock = pygame.time.Clock()
 
 # grade de pixels 
@@ -83,12 +89,10 @@ zz = -DJanela * np.ones_like(xx)
 
 image = np.zeros((n_lin, n_col, 3), dtype=float)
 
-# iterar sobre os objs e checar qual foi intersectado primeiro 
-
 origem = np.array([0.0, 0.0, 0.0])
 bg_color = np.array([100, 100, 100], dtype=float) / 255.0
 
-cenario = [esfera, planoChao, planoFundo, cilindro]
+cenario = [esfera, planoChao, planoFundo, cilindro, cone]
 
 for i in range(n_lin):
     for j in range(n_col):
@@ -98,18 +102,20 @@ for i in range(n_lin):
         intersec = cenario_intersect(cenario, raio)
 
         if intersec is not None:
-            #print(i,j)
             P = intersec["ponto"]
-            #print(P)
-            normal = intersec["normal"]
-            normal /= np.linalg.norm(normal)
-            view_dir = -raio.direcao
-            view_dir /= np.linalg.norm(view_dir)
-            Kd, Ks, Ka ,m = intersec["Kd"], intersec["Ks"], intersec["Ka"] ,intersec["m"]
-            #I = calcular_iluminacao(P, normal, view_dir, luzPontual, Kd, Ks, Ka, luzAmbiente.intensidade ,m)
-            I = calcular_iluminacao(P, normal, view_dir, luzPontual, Kd, Ks, Ka, luzAmbiente.intensidade, m, cenario)
+            normal = intersec["normal"] / np.linalg.norm(intersec["normal"])
+            view_dir = -raio.direcao / np.linalg.norm(raio.direcao)
+            obj_intersec = intersec["obj"]
+            Kd, Ks, Ka, m = obj_intersec.Kd, obj_intersec.Ks, obj_intersec.Ka, obj_intersec.m
 
-            color = intersec["cor"]   
+            I = calcular_iluminacao(
+                P, normal, view_dir,
+                luzPontual, Kd, Ks, Ka,
+                luzAmbiente.intensidade, m,
+                cenario, obj_intersec 
+            )
+
+            color = obj_intersec.cor
             image[i, j] = np.clip(color * I, 0, 1)
         else:
             image[i, j] = bg_color
