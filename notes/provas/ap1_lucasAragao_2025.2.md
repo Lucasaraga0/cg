@@ -79,6 +79,8 @@ $$Esf_{final} = T_{esf} S_{esf}$$
 - Centro da base inicial: (0,0,0)
 Centro da base final: (208, 92, 0)
 
+- Vértice inicial: (1,0,0)
+
 - Raio da base inicial: 1
 Raio da base final: 38
 
@@ -156,3 +158,236 @@ Inicialmente aumentamos, depois rotacionamos e por fim transladamos o objeto, lo
 $$Pir_{final} = T_{pir} R_z(\pi/5) S_{pir}$$
 
 ## Questão 2
+
+- $\alpha = 8 \% 4 = 0$. 
+
+- $P_E = (500 \cos(\frac{8 \pi}{18}), 500 \sin(\frac{8 \pi}{18}), 250)$, que fazendo as simplificações fica $P_E = (500 \cos(\frac{4 \pi}{9}), 500 \sin(\frac{4 \pi}{9}), 250)$.
+
+- $P_{At} = (208, 208, 0)$
+
+- A primeira coisa a se fazer é calcular o vetor $d$ de direção do raio, para que possamos calcular as interseções do raio com os objetos do cenário. 
+
+    ![alt text](raio.png)
+
+O vetor $D$ é dado por 
+
+$$D = P_{At} - P_E$$
+$$D = (208,208,0) - (500 \cos(\frac{4 \pi}{9}), 500 \sin(\frac{4 \pi}{9}), 250)$$
+
+$$D = (208,208,0) - (86.82, 492.4 ,250)$$
+$$D = (121.18, - 284.4 ,-250)$$
+
+Normalizando ele obtemos,
+
+$$d = (0.30, - 0.72, -0.63)$$
+
+
+Ok, agora já temos os valores para montar a equação do raio, $P(t) = P_E + t *d$.
+
+O que devemos então é encontrar primeiramente qual o objeto que é intersectado pelo raio primeiro, ou seja, qual o objeto que obtém o menor $t$.
+
+### Parte 1
+#### Plano
+- O plano, tem o ponto conhecido $P_\pi = (0,0,0)$ e normal $n_\pi=(0,0,1)$.
+
+O $t_I$ do raio com o plano é dado por: 
+
+$$t_I = -\frac{w \cdot n}{d \cdot n}$$
+
+- Em que $w = P_0 - P_\pi$. Logo teremos que $w = P_E$
+$$t_I = -\frac{(86.82, 492.4 ,250) \cdot (0,0,1)}{ (0.30, - 0.72, -0.63) \cdot (0,0,1)}$$
+
+$$t_I = -\frac{250}{-0.63} = 396.82$$
+
+#### Esfera
+- A esfera tem centro = (92, 208, 155.5) e raio = 28.
+
+- O $t_i$ é dado por pela resolução da equação do segundo grau:
+    $$at_I^2 + bt_I + c =0$$
+
+Em que $a = d \cdot d = 1$, $b = 2 w \cdot d$, com $w = P_E - C$, e por fim $c = w \cdot w - R^2$. Calculamos o $\Delta = b^2 - 4ac$ para descobrir se o raio intersecta a esfera.
+$w = (86.82, 492.4 ,250) - (92, 208, 155.5) = (-5.18, 284.4, 94.5)$. 
+
+Fazendo os cálculos, obtemos que $b \approx 531.71$ e $c \approx 89056.44$. Ao fazermos $\Delta = b^2 - 4ac$, obtemos $\Delta < 0$. Logo, o raio não intersecta a esfera.
+
+#### Anel cilindrico
+
+- O cilindro tem centro da base = (92, 208, 0), raio = 18 e altura = 165.
+
+Assim como no caso da esfera, o $t_I$ é dado pela resolução de uma equação do segundo grau, a diferença aqui é o que cada $a,b,c$ representa:
+
+$$a = d^T M d ;b =2 w M d; c = w^T m w -R^2$$
+
+Em que, o $w = P_E - C_B = ((86.82, 492.4 ,250) - (92, 208, 0)) = (5.18, 284.4, 250)$.
+
+Para obtermos a matriz M, devemos calcular o vetor normalizado direção do cilindro. Que é dado por $D_{cil} = (Topo_{cil} - CentroBase_{cil}) = ((92, 373, 0) - (92, 208, 0) ) = (0, 165, 0)$, normalizando ele obtemos $d_{cil}=(0,1,0)$. 
+Com isso a matriz M é dada por $M = I - d_c d_c^T$. A matriz M resultando é
+
+$$M= \begin{bmatrix}
+1 & 0 & 0\\
+0 & 0 & 0\\
+0& 0 & 1 \\
+\end{bmatrix}$$
+
+Nisso podemos calcular os valores de $a,b,c$:
+
+$$a = 0.4869; b = 0; c = 62202.83$$
+Ao calcular o $\Delta$, obtemos $\Delta \leq0$.  Logo, o raio não intersecta o cilidro.
+
+### Cone de base aberta
+
+- O cone tem centro de base = (208, 92, 0), raio = 38 e altura = 410.
+
+Mais uma vez, o t_I é dado por uma equação do segundo grau, que tem como coeficientes:
+
+$$a = d M^\ast d ; b = 2 w^T M^\ast - 2Hd^T d_{co}; c =w^T M^\ast w - 2H w^T d_{co} + H^2$$. 
+
+Temos que $w = P_E - C_B = ((86.82,492.4,250) - (208, 92, 0)) = (-121.18, 400.4, 250)$. Além disso devemos calcular a direção do cone, $d_{co}$. Como inicialmente, temos que o vértice é (1,0,0) e a base (0,0,0) e, as transformações aplicadas não alteraram a direção do cone, temos que $d_{co} = (1,0,0)$. Com isso, o último item faltante é a matriz $M^\ast$, que é dada por $M^\ast = \bar{M} - (\frac{H}{R})^2 M$, onde $M = I - d_c d_c^T$ e $\bar{M} = d_c d_c^T$. Nisso, obtemos 
+
+$$M= \begin{bmatrix}
+0 & 0 & 0\\
+0 & 1 & 0\\
+0& 0 & 1 \\
+\end{bmatrix}$$
+
+$$\bar{M}= \begin{bmatrix}
+1 & 0 & 0\\
+0 & 0 & 0\\
+0& 0 & 0 \\
+\end{bmatrix}$$
+
+$$M^\ast= \begin{bmatrix}
+1 & 0 & 0\\
+0 & -116.41 & 0\\
+0& 0 & -116.41 \\
+\end{bmatrix}$$
+
+Com isso, podemos calcular os coeficientes da equação:
+
+$$a = -106.46; b = 103472.09; c = -25656953.69$$
+
+Ao calcular o $\Delta$, obtemos $\Delta \leq 0$. Logo o raio não intersecta o cone.
+
+
+### Pirâmide de base quadrada
+
+- A pirâmide tem centro da base = (208,208,0), arestas da base com comprimento = 5 e altura = 420. 
+
+- Para obter o vértice do topo da pirâmide a gente aplica as transformações da pirâmide no ponto $V_T = (0,0,1)$, obtendo o ponto $V_T{final} = (208,208,420)$.
+
+- Vamos calcular também os vértices da base. A meneira que eu fiz aqui foi, primeiramente encontrar os vértices originais da base, para deo=pois aplicar as transformações. Como o centro da base era na origem e o comprimento das arestas era igual a 1, obtemos que os vértices eram $V_1= (-0.5, -0.5,0), V_2 = (0.5, -0.5, 0), V_3 = (0.5, 0.5,0), V_4 = (-0.5,0.5,0)$. 
+- Aplicando as transformações obtemos, $V_1 = (207.44, 204.5, 0), V_2= (211.49, 207.44, 0), V_3 =(208.55, 211.49,0), V_4 = (204.5, 208.55, 0)$.
+
+- Para cada face triangular, o $t_I$ é obtido fazendo 
+$$t_I = - \frac{w \cdot n}{d \cdot n}$$
+
+- Então para cada face a gente precisa obter a normal $n$. Para isso a gente vai user o conceito de coordenadas baricentricas, que para cada face triangular $\{ V_1,V_2,V_3 \}$, a gente vai fazer $r_1 = V_2 - V_1$ e $r_2 = V_3 - V_1$, para então calcular $N = r_1 \times r_2$ e $n$, sua versão normalizada.
+
+- Além disso, $w$ é dado por $w = P_E - V_1$
+
+- Depois disso precisamos validar o ponto. Vendo se ele está na face. Para isso a gente vai calcular o ponto $P_I = P_0 + t_I d$. Depois disso a gente calcula os valores das componentes $c_1, c_2, c_3$. Sejam $s_1 = V_1 - P_I, s_2 = V_2 - P_I, s_3 = V_3 - P_I$, temos
+$$c_1 = \frac{n \cdot s_3 \times s_1}{||N||}; c_2 = \frac{n \cdot s_1 \times s_2}{||N||}; c_3 = 1 - (c_1 + c_2)$$
+
+Caso algum dos componentes seja menor que 0, o ponto está fora da face. 
+
+Com isso vamos iniciar o processo
+
+#### Face $V_1 V_2 V_T$
+
+Sejam $r_{11} = (V_2 - V_1)$ e $r_{12} = (V_T - V_1)$, temos que a normal, $n_1$ será dada por 
+
+$$n_1 =\frac{r_1 \times r_2}{ ||r_1 \times r_2||} = \frac{(2933.28, -464.58, 0)}{2969.84} = (0.98, -0.15, 0)$$
+
+Além disso, temos que $w = (P_E - V_1) = (-120.62,287.89,250)$, com isso conseguimos obter o ponto $t_I$, dado por 
+
+$$t_I = - \frac{ w \cdot n}{d \cdot n} = - \frac{-164.17}{0.40} = 401.47$$.
+
+Vamos agora validar o ponto encontrado. Colocando ele na equação do raio, obtemos, $P_I = (207.26, 203.33,  -2.92)$. Aplicando ele nas fórmulas, obtemos os seguintes valores das componentes:
+$$c1: -0.66, c2: -0.003, c3: 1.67$$
+
+Como existem valores menores que 0, o raio não intersecta a face. 
+
+#### Face $V_2 V_3 V_T$
+
+Sejam $r_{12} = (V_3 - V_2)$ e $r_{12} = (V_T - V_2)$, temos que a normal, $n_2$ será dada por 
+
+$$n_2 =\frac{r_1 \times r_2}{ ||r_1 \times r_2||} = \frac{(1698.93, 1234.34,12.5)}{2100.04} = (0.81, 0.58, 0.01)$$
+
+Além disso, temos que $w = (P_E - V_2) = (-124.67, 284.95, 250)$, com isso conseguimos obter o ponto $t_I$, dado por 
+
+$$t_I = - \frac{ w \cdot n}{d \cdot n} = - \frac{-68.11}{0.18} = 369.7$$.
+
+Vamos agora validar o ponto encontrado. Colocando ele na equação do raio, obtemos, $P_I = (197.73, 226.21, 17,08)$. Aplicando ele nas fórmulas, obtemos os seguintes valores das componentes:
+$$c1: 4.63, c2: 0.04, c3: -3.67$$
+
+Logo, o raio não intersecta a face. 
+
+#### Face $V_3 V_4 V_T$
+
+Como o processo é bastante repetitivo, a partir daqui apenas colocarei os resultados encontrados, sem explicar muito. $r_{13} = (V_4 - V_3)$ e $r_{13} = (V_T - V_3)$. 
+
+$$n_3 = \frac{(-1234.34, 1698.93, 12.5)}{2100.03} = (-0.58, 0.80, 0.005)$$
+
+$w = (P_E -  V_3) = (-121.73, 280.9 ,250)$, tendo $tI = 393.79$ e por isso, 
+$$P_I = (204.95, 208.86, 1.90)$$
+
+Com isso obtemos, os valores de componente 
+$$c_1 =  0.88; c_2: 6.30 \times 10^{-5}; c_3= 0.11$$
+
+Portanto o raio intercepta a face. 
+
+#### Face $V_4 V_1 V_T$
+
+Nesse caso temos, $r_{14} = (V_1 - V_4)$ e $r_{14} = (V_T - V_4)$.
+
+$$n_4 =  \frac{( -464.58, -2933.28, 0)}{2969.84} = (-0.15, -0.98, 0)$$
+
+$w = (P_E -  V_4) = (-117.68, 283.84, 250)$, tendo $tI = 394.36$ e por isso, 
+
+$$P_I = (205.1306409  208.45446183   1.54765411)$$
+
+Por fim, obtemos as componentes 
+
+$$c_1 = -0.90, c_2, -0.0018, c_3 = 1.91$$
+
+Por isso, o raio não intersecta a face.
+
+#### Face 1 da base $V_1 V_2 V_3$
+
+Para a base quadrada, dividi ela em 2 faces. Uma com os vértices $V_1 V_2 V_3$ e outra com $V_1 V_3 V_4$. As contas seguem o mesmo raciocínio. 
+
+$r_{15} = (V_2 - V_1)$ e $r_{15} = (V_3 - V_1)$.
+
+$$n_5 = \frac{( 0.  0. 25)}{25} = (0,0,1)$$
+
+$w = (P_E -  V_1) = (-120.62, 287.89, 250)$, tendo $tI = 396.82$, levando a 
+
+$$P_I = (205.86, 206.68, 0)$$
+
+Finalmente obtemos as componentes 
+$c_1 = -0.53; c_2, 0.53; c_3 = 0.99$$
+
+Dessa forma, o raio não intersecta a face. 
+
+#### Face 2 da base $V_1 V_3 V_4$
+
+A última checagem. 
+
+$r_{16} = (V_3 - V_1)$ e $r_{16} = (V_4 - V_1)$.
+
+$$n_6 = \frac{( 0.  0. 25)}{25} = (0,0,1)$$
+
+$w = (P_E -  V_1) = (-120.62, 287.89, 250)$, tendo $tI = 396.82$, levando a 
+
+$$P_I = (205.86, 206.68, 0)$$
+
+Por último, obtemos os componentes 
+$$c_1 = 0.0004; c_2, 0.53; c_3 = 0.46$$
+
+A face é interceptada pelo raio. 
+
+#### Resposta parte 1
+
+Apenas 3 "objetos" são atingidos pelo raio. O plano do chão, uma face lateral da pirâmide e uma parte da base da pirâmide. A escolha então, deve ser daquele que possui o menor $t_I$. Sendo este, a face lateral da pirâmide, formada pelo vértices $V_3 V_4 V_T$.
+
+### Parte 2 - cálculo da energia 
