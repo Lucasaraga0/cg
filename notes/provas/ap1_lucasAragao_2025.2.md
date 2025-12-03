@@ -391,3 +391,41 @@ A face é interceptada pelo raio.
 Apenas 3 "objetos" são atingidos pelo raio. O plano do chão, uma face lateral da pirâmide e uma parte da base da pirâmide. A escolha então, deve ser daquele que possui o menor $t_I$. Sendo este, a face lateral da pirâmide, formada pelo vértices $V_3 V_4 V_T$.
 
 ### Parte 2 - cálculo da energia 
+
+- Dada a fonte pontual $P_F$, posicionada em (300,300,1000) e com intensidade (1,1,1). Devemos determinar a energia que chega no olho do observador partindo do ponto $P_{At}$. Considerando que o material do objeto é dado pelos coeficientes $(k_{rD}, k_{gD}, k_{bD}) = (k_{rE}, k_{gE}, k_{bE}) = (0.5, 0.25, 0.5)$ e que o coeficiente de polimento do material é $e=2$. O cálculo da energia deve levar em conta os componentes da figura abaixo.
+    
+    ![teste](energia.png)
+
+De modo que a $I_E$, ou seja a intensidade de energia que chega no olho do observador é dada por:
+
+$$I_E = I_F \odot K_D F_D + I_F \odot K_E F_E$$
+
+Onde, $F_D = \max(0, l \cdot n)$ e $F_E = \max(0, (r \cdot v)^e)$. E os vetores são dados por $v = -d$, $l = (P_F - P_{At})/||P_F - P_{At}||$, $r = 2 (n \cdot l) n - l$ e $n$ é a normal.
+
+Sendo a normal encontrada antes, a normal da face lateral da pirâmide de base quadrada, dada por 
+
+$$n_3 = \frac{(-1234.34, 1698.93, 12.5)}{2100.03} = (-0.58, 0.80, 0.005)$$
+
+E o vetor direção de $P_E$ à $P_{At}$: 
+$$d = (0.30, - 0.72, -0.63)$$
+
+Por consequência obtemos, $v = (-0.3, 0.72, 0.63)$. O cálculo de $l$ é dado por 
+$$l = \frac{(P_F - P_{At})}{||P_F - P_{At}||} = \frac{(92,92,1000)}{1008.42} = (0.09, 0.09, 0.99)$$.
+
+Com isso, conseguimos calcular o vetor $r$:
+$$r = 2 (n \cdot l)n - l = (-0.04, -0.04, -0.94)$$
+
+Dessa forma, conseguimos calcular os valores de $F_D$ e $F_E$. 
+
+$$F_D = \max(0, l \cdot n) = \max (0, 0.02) = 0.02$$
+$$F_E = \max(0, (r \cdot v)^e) = \max (0,(-0.61)^2) = \max(0, 0.37) = 0.37$$
+
+Nisso temos todos os elementos para calcular a intensidade da luz que chega no olho do observador:
+
+$$I_E = I_F \odot K_D F_D + I_F \odot K_E F_E$$
+
+$$I_E = (1,1,1) \odot (0.5, 0.25, 0.5) \cdot 0.02 + (1,1,1) \odot (0.5, 0.25, 0.5) \cdot 0.37$$
+
+$$I_E = (0.195, 0.0975, 0.195)$$
+
+Logo a energia RGB que chega na energia do observador, desconsiderando sombras, é dada pelas componentes $I_E = (0.195, 0.0975, 0.195)$.
