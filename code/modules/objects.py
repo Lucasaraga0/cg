@@ -14,7 +14,7 @@ class SimpleObject(ABC):
     @abstractmethod
     def intersect(self, ray):
         pass
-
+    
 class Esfera(SimpleObject):
     def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, Ka =0.2 ,m=20):
         self.centro = np.array(centro, dtype=float)

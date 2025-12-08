@@ -17,15 +17,22 @@ class Triangulo:
         # calculo da normal
         N  = np.cross(r1,r2)
         n = N/ np.linalg.norm(N)
-        # calculo do ponto de intersecao 
-        tI = - np.dot((ray.origem - self.v0), n) / np.dot(ray.direcao, n)
-        pI = ray.origem + tI * ray.direcao
+        # calculo do ponto de intersecao
+        w = ray.origem - self.v0
+        d = ray.direcao
+        tI = - np.dot(w, n) / np.dot(d, n)
+        pI = ray.origem + tI * d
         # verificacao da posicao do ponto tI 
-        denom = np.dot(N,n) # r1 x r2 . n
-        c1 = (np.dot(np.cross((self.v2 - pI), (self.v0 - pI)), n))/ denom
-        c2 = (np.dot(np.cross((self.v0 - pI), (self.v1 - pI)), n))/ denom
-        c3 = (np.dot(np.cross((self.v1 - pI), (self.v2 - pI)), n))/ denom
+        s1 = self.v0 - pI
+        s2 = self.v1 - pI
+        s3 = self.v2 - pI
+        #s3 = vt_final - pI2
+        denom = np.linalg.norm(N) 
         
+        c1 = np.dot(n, np.cross(s3,s1)) / denom
+        c2 = np.dot(n, np.cross(s1,s2)) / denom
+        c3 = 1 - c1 - c2
+
         if c1 <= 0 or c2<= 0 or c3<=0:
             return None
         return { "t": tI,
@@ -63,17 +70,32 @@ class Face:
                 intersec = hit
         return intersec
 
-class Cubo:
+class BlocoRetangular:
     def __init__(self, faces, Kd, Ks, Ke): 
         """
         define um obj da classe Cubo a partir das suas faces
         """
-        # o cubo eh p´ser formado pela 6 faces quadradas
-        # as faces compartilham vertices, mapear os 8 vertices
-        for face in faces:
-            pass 
+        self.faces = faces        
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ke = Ke
 
-        pass
+        verts = []
+        for face in faces:
+            for v in face.vertices:
+                if not any(np.allclose(v, x) for x in verts):
+                    verts.append(v)
+        self.vertices = verts
 
     def intersect(self, ray):
-        pass
+        intersec = None
+        for face in self.faces:
+            hit = face.intersect(ray)
+            if hit is None:
+                continue
+
+            if hit["t"] > 0:  # garantir interseção válida
+                if intersec is None or hit["t"] < intersec["t"]:
+                    intersec = hit
+
+        return intersec

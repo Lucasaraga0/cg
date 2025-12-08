@@ -1,5 +1,6 @@
 ## AP1 CG1 - 2025.2
 - Aluno: Lucas Rodrigues Aragão 
+
 A = 5, B = 3, C = 8, D = 3 , E = 9, F = 0
 k = (300  + 5 + 3 + 8 + 3 + 9 + 0) % 10 = (328) % 10 = 8
 
