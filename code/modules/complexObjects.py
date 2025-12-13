@@ -1,8 +1,8 @@
 import numpy as np
-from objects import Ray
+from modules.objects import Ray
 
 class Triangulo:
-    def __init__(self, v0, v1, v2):
+    def __init__(self, v0, v1, v2, cor, Kd, Ks, Ka, m):
         """
         define um obj da classe triangulo a partir de seus 3 vertices
         """
@@ -10,6 +10,11 @@ class Triangulo:
         self.v1 = v1
         self.v2 = v2
         self.vertices = np.array([v0,v1,v2])
+        self.cor = np.array(cor, dtype = float) / 255.0
+        self.Kd = Kd
+        self.Ks = Ks
+        self.Ka = Ka
+        self.m = m
 
     def intersect(self, ray: Ray):
         r1 = self.v1 - self.v0
@@ -42,23 +47,23 @@ class Triangulo:
         }
 
 class Face:
-    def __init__(self, tri1: Triangulo, tri2: Triangulo, cor):
+    def __init__(self, tri1: Triangulo, tri2: Triangulo):
         """
         define um obj da classe face a partir dos triangulos que o compoem 
         """
         # o quadrado eh p ser formado pela juncao de 2 triangulos que possuem 2 vertices iguais
         verticesQuad = []
         for vertice in tri1.vertices:
-            if vertice not in verticesQuad:
+            if not any(np.allclose(vertice, v) for v in verticesQuad):
                 verticesQuad.append(vertice)
         for vertice in tri2.vertices:
-            if vertice not in verticesQuad:
+            if not any(np.allclose(vertice, v) for v in verticesQuad):
                 verticesQuad.append(vertice)
-        
+
+
         self.tri1 = tri1
         self.tri2 = tri2
         self.vertices = verticesQuad        
-        self.cor = np.array(cor, dtype = float) / 255.0
     
     def intersect(self, ray: Ray):
         intersec = None
@@ -70,22 +75,75 @@ class Face:
                 intersec = hit
         return intersec
 
-class BlocoRetangular:
-    def __init__(self, faces, Kd, Ks, Ke): 
+class Cubo: 
+    def __init__(self, tamAresta, centro_base, ux, uy, uz, cor, Kd, Ks, Ka, m):
         """
-        define um obj da classe Cubo a partir das suas faces
+        Constrói um cubo a partir do tamanho da aresta, do centro da BASE,
+        e dos vetores de orientação locais (ux, uy, uz).
         """
-        self.faces = faces        
+
+        self.a = tamAresta
+        self.cor = cor
         self.Kd = Kd
         self.Ks = Ks
-        self.Ke = Ke
+        self.Ka = Ka
+        self.m = m
+        # normalizar eixos locais
+        ux = np.array(ux, dtype=float)
+        uy = np.array(uy, dtype=float)
+        uz = np.array(uz, dtype=float)
 
-        verts = []
-        for face in faces:
-            for v in face.vertices:
-                if not any(np.allclose(v, x) for x in verts):
-                    verts.append(v)
-        self.vertices = verts
+        ux = ux / np.linalg.norm(ux)
+        uy = uy / np.linalg.norm(uy)
+        uz = uz / np.linalg.norm(uz)
+
+        self.ux = ux
+        self.uy = uy
+        self.uz = uz
+
+        # converter centro da base → centro do cubo
+        centro_base = np.array(centro_base, dtype=float)
+        centro_cubo = centro_base + (tamAresta/2) * uy
+        self.centro = centro_cubo
+
+        # meia aresta
+        h = tamAresta / 2.0
+
+        # gerar os 8 vértices
+        offsets = [
+            -ux*h - uy*h - uz*h,
+            +ux*h - uy*h - uz*h,
+            -ux*h + uy*h - uz*h,
+            +ux*h + uy*h - uz*h,
+            -ux*h - uy*h + uz*h,
+            +ux*h - uy*h + uz*h,
+            -ux*h + uy*h + uz*h,
+            +ux*h + uy*h + uz*h,
+        ]
+        self.vertices = [centro_cubo + off for off in offsets]
+
+        # faces do cubo (cada uma com 4 vértices)
+        faces_idx = [
+            (0,1,3,2),  
+            (4,5,7,6),  
+            (0,1,5,4),  
+            (2,3,7,6),  
+            (0,2,6,4),  
+            (1,3,7,5),  
+        ]
+
+        self.faces = []
+        for i0, i1, i2, i3 in faces_idx:
+            v0 = self.vertices[i0]
+            v1 = self.vertices[i1]
+            v2 = self.vertices[i2]
+            v3 = self.vertices[i3]
+
+            t1 = Triangulo(v0, v1, v2, cor, Kd, Ks, Ka, m)
+            t2 = Triangulo(v0, v2, v3, cor, Kd, Ks, Ka, m)
+            face = Face(t1, t2)
+
+            self.faces.append(face)
 
     def intersect(self, ray):
         intersec = None
@@ -94,7 +152,7 @@ class BlocoRetangular:
             if hit is None:
                 continue
 
-            if hit["t"] > 0:  # garantir interseção válida
+            if hit["t"] > 0:
                 if intersec is None or hit["t"] < intersec["t"]:
                     intersec = hit
 

@@ -56,7 +56,7 @@ class Esfera(SimpleObject):
 
 class Plano(SimpleObject):
     def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1):
-        self.pontoPi = np.array(pontoPi)
+        self.pontoPi = np.array(pontoPi, dtype= float)
         self.normalPlano = np.array(normalPlano)
         self.cor = np.array(cor, dtype=float) / 255.0
         self.Kd = Kd
@@ -142,10 +142,10 @@ class Cilindro(SimpleObject):
     
 class Cone(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
-        self.centroBase = np.array(centroBase)
+        self.centroBase = np.array(centroBase, dtype = float)
         self.raioBase = raioBase
         self.altura = altura
-        self.vetorDir = vetorDir
+        self.vetorDir = np.array(vetorDir, dtype= float)
         self.vetorDir /= np.linalg.norm(self.vetorDir)
         self.cor = np.array(cor, dtype= float)/ 255.0
         self.Kd = Kd
