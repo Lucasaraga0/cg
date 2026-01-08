@@ -57,6 +57,9 @@ def cenario_intersect(listaObjetos, ray, ignore=None):
             intersec = hit
     return intersec
 
+def apply_transformation(object, matrix):
+    """aplica a matriz de transformacao a um objeto"""
+    #TODO
 
 def normalize(v):
     return v / np.linalg.norm(v, axis=-1, keepdims=True)
