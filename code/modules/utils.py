@@ -63,3 +63,5 @@ def apply_transformation(object, matrix):
 
 def normalize(v):
     return v / np.linalg.norm(v, axis=-1, keepdims=True)
+
+

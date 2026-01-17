@@ -1,3 +1,4 @@
+from PIL import Image
 import numpy as np
 from abc import ABC, abstractmethod
 
@@ -54,8 +55,29 @@ class Esfera(SimpleObject):
                 "normal": normal, 
                 "obj":self}
 
+def load_texture(path):
+    img = Image.open(path).convert("RGB")
+    img = np.array(img, dtype=np.float32) / 255.0
+
+    # sRGB → linear
+    img = np.power(img, 2.2)
+    return img
+
+
+def criar_base_plano(normal):
+    if abs(normal[1]) > 0.9:  # chão ou teto
+        eixo_u = np.array([1, 0, 0])
+        eixo_v = np.array([0, 0, 1])
+    else:  # parede
+        eixo_u = np.array([1, 0, 0])
+        eixo_v = np.array([0, 1, 0])
+
+    return eixo_u, eixo_v
+
+
+
 class Plano(SimpleObject):
-    def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1):
+    def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1, texture = None, tex_scale = 1.0):
         self.pontoPi = np.array(pontoPi, dtype= float)
         self.normalPlano = np.array(normalPlano)
         self.cor = np.array(cor, dtype=float) / 255.0
@@ -63,6 +85,40 @@ class Plano(SimpleObject):
         self.Ks = Ks
         self.Ka = Ka
         self.m = m
+        self.texture = texture
+
+        if texture is not None:
+            self.tex_scale = tex_scale  # controla repetição da textura
+            # base local do plano
+            self.eixo_u, self.eixo_v = criar_base_plano(self.normalPlano)
+
+    def get_uv(self, ponto):
+        rel = ponto - self.pontoPi
+
+        u = np.dot(rel, self.eixo_u) * self.tex_scale
+        v = np.dot(rel, self.eixo_v) * self.tex_scale
+
+        # repete textura
+        u = u % 1.0
+        v = v % 1.0
+
+        return u, v
+
+    def sample_texture(self, ponto):
+        if self.texture is None:
+            return self.cor
+
+        h, w, _ = self.texture.shape
+        u, v = self.get_uv(ponto)
+
+        x = int(u * (w - 1))
+        y = int((1 - v) * (h - 1))
+
+        tex_color = self.texture[y, x]
+
+        return tex_color
+
+
 
     def intersect(self, ray:Ray):
         w = ray.origem - self.pontoPi
@@ -70,11 +126,14 @@ class Plano(SimpleObject):
         if ti < 0:
             return None
         pontoI = ray.origem + ti * ray.direcao
+            
         return {"t":ti, 
                 "ponto": pontoI, 
                 "normal": self.normalPlano, 
+                "cor": self.sample_texture(pontoI),
                 "obj": self}
-        
+
+    
 class Cilindro(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
         self.centroBase = np.array(centroBase)
