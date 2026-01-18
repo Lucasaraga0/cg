@@ -2,9 +2,10 @@ import numpy as np
 import pygame
 import sys
 import multiprocessing as mp
-from modules.objects import Esfera,Ray, Plano, load_texture, criar_base_plano
-from modules.light import LuzPontual, LuzAmbiente
-from modules.utils import calcular_iluminacao, cenario_intersect
+from modules.objects import Esfera,Ray, Plano, load_texture
+from modules.light import LuzPontual, LuzAmbiente, LuzDirecional, LuzSpot
+from modules.utils import render_linhas
+
 
 #dimensoes da janela em cm
 Wjanela = 60
@@ -54,6 +55,19 @@ luzPontual = LuzPontual(intensidade=intensidadePontual, posicao= posicaoPontual)
 intensidadeAmbiente = np.array([0.8,0.8,0.8])
 luzAmbiente = LuzAmbiente(intensidadeAmbiente)
 
+#luz direcional 
+intensidadeDirecional = np.array([0.8,0.8,0.8])
+direcaoLuz = np.array([1, -1, -1])
+luzDirecional = LuzDirecional(intensidade= intensidadeDirecional, direcao= direcaoLuz )
+
+#luz spot
+
+intensidadeSpot = np.array([1,1,1])
+pontoSpot = np.array([0,0,0])
+direcaoSpot = np.array([0,0,-1])
+aberturaSpot = np.pi/3
+luzSpot = LuzSpot(intensidadeSpot, pontoSpot, direcaoSpot, aberturaSpot)
+
 # window
 n_col, n_lin = 500,500
 
@@ -83,50 +97,49 @@ image = np.zeros((n_lin, n_col, 3), dtype=float)
 origem = np.array([0.0, 0.0, 0.0])
 bg_color = np.array([100, 100, 100], dtype=float) / 255.0
 
+luzes = [luzSpot]
 cenario = [esfera, planoChao, planoFundo]
 
-for i in range(n_lin):
-    for j in range(n_col):
-        
-        dir_ray = np.array([xx[i, j], yy[i, j], zz[i, j]]) - origem
-        raio = Ray(origem, dir_ray)
-        intersec = cenario_intersect(cenario, raio)
+if __name__ == "__main__":
 
-        if intersec is not None:
-            P = intersec["ponto"]
-            normal = intersec["normal"] / np.linalg.norm(intersec["normal"])
-            view_dir = -raio.direcao / np.linalg.norm(raio.direcao)
-            obj_intersec = intersec["obj"]
-            Kd, Ks, Ka, m = obj_intersec.Kd, obj_intersec.Ks, obj_intersec.Ka, obj_intersec.m
+    num_processos = mp.cpu_count()
 
-            I = calcular_iluminacao(
-                P, normal, view_dir,
-                luzPontual, Kd, Ks, Ka,
-                luzAmbiente.intensidade, m,
-                cenario, obj_intersec 
-            )
-            if isinstance(obj_intersec, Plano):
-                color = intersec["cor"]
-            else:
-                color = obj_intersec.cor
-            image[i, j] = np.clip(color * I, 0, 1)
-        else:
-            image[i, j] = bg_color
+    linhas_por_proc = n_lin // num_processos
+    tasks = []
 
+    for p in range(num_processos):
+        i_start = p * linhas_por_proc
+        i_end = n_lin if p == num_processos - 1 else (p + 1) * linhas_por_proc
+
+        tasks.append((
+            i_start, i_end,
+            xx, yy, zz,
+            origem,
+            cenario,
+            luzes,
+            bg_color
+        ))
+
+    with mp.Pool(processes=num_processos) as pool:
+        resultados = pool.map(render_linhas, tasks)
+
+    # junta os blocos na imagem final
+    for i_start, bloco in resultados:
+        image[i_start:i_start + bloco.shape[0], :, :] = bloco
 
 
-image = (image * 255).astype(np.uint8)
-surface = pygame.surfarray.make_surface(np.flipud(np.rot90(image)))
+    image = (image * 255).astype(np.uint8)
+    surface = pygame.surfarray.make_surface(np.flipud(np.rot90(image)))
 
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    window.blit(pygame.transform.scale(surface, (window_w, window_h)), (0, 0))
-    pygame.display.flip()
-    clock.tick(60)
+        window.blit(pygame.transform.scale(surface, (window_w, window_h)), (0, 0))
+        pygame.display.flip()
+        clock.tick(60)
 
-pygame.quit()
-sys.exit()
+    pygame.quit()
+    sys.exit()

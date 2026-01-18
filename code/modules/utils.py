@@ -1,48 +1,79 @@
 import numpy as np
-from modules.objects import Ray
+from modules.objects import Ray, Plano
+from modules.light import LuzAmbiente
 
-
-def calcular_iluminacao(ponto, normal, view_dir, luz, Kd, Ks, Ka, LuzAmb, m, objetos, obj_atual):
+def calcular_iluminacao(ponto, normal, view_dir, luzes, obj_atual, objetos):
     """
-    ponto: np.array -> posição do ponto
-    normal: vetor normal no ponto
-    view_dir: vetor da câmera
-    luz: instância de Luz
-    Kd, Ks, Ka: coeficientes de iluminação
-    LuzAmb: intensidade da luz ambiente
-    m: expoente especular (brilho)
-    objetos: lista de objetos na cena
-    obj_atual: o objeto que já foi intersectado
+    ponto: np.array (3,)
+    normal: np.array (3,)
+    view_dir: np.array (3,)
+    luzes: lista de luzes (LuzAmbiente, LuzPontual, LuzDirecional, LuzSpot)
+    obj_atual: objeto intersectado
+    objetos: lista de objetos da cena
     """
 
-    # direção da luz e intensidade
-    l, I_F = luz.dir_intensi(ponto)
-    l /= np.linalg.norm(l)
-    normal /= np.linalg.norm(normal)
-    view_dir /= np.linalg.norm(view_dir)
+    normal = normal / np.linalg.norm(normal)
+    view_dir = view_dir / np.linalg.norm(view_dir)
 
-    # raio de sombra
-    epsilon = 1e-4
-    origem_shadow = ponto + epsilon * normal
-    shadow_ray = Ray(origem_shadow, l)
+    Kd = obj_atual.Kd
+    Ks = obj_atual.Ks
+    Ka = obj_atual.Ka
+    m  = obj_atual.m
 
-    # checa se algum outro objeto bloqueia a luz
-    intersec_sombra = cenario_intersect(objetos, shadow_ray, ignore=obj_atual)
+    I_total = np.zeros(3)
 
-    if intersec_sombra is not None:
-        # distância até a luz
-        t_luz = np.linalg.norm(luz.posicao - ponto)
-        if intersec_sombra["t"] < t_luz:
-            # ponto está na sombra -> só luz ambiente
-            return Ka * LuzAmb
+    for luz in luzes:
 
-    # cálculo do modelo de Phong
-    diff = max(np.dot(normal, l), 0.0)
-    r = 2 * np.dot(normal, l) * normal - l
-    r /= np.linalg.norm(r)
-    spec = max(np.dot(r, view_dir), 0.0) ** m
+        if isinstance(luz, LuzAmbiente):
+            I_total += Ka * luz.intensidade
+            continue
 
-    return I_F * (Kd * diff + Ks * spec) + Ka * LuzAmb
+        l, I_F = luz.dir_intensi(ponto)
+
+        # se a luz nao ilumina o ponto no caso da luzSpot
+        if np.allclose(I_F, 0):
+            continue
+
+        l = l / np.linalg.norm(l)
+
+        # checagem de sombra
+        epsilon = 1e-4
+        origem_shadow = ponto + epsilon * normal
+        shadow_ray = Ray(origem_shadow, l)
+
+        intersec_sombra = cenario_intersect(
+            objetos,
+            shadow_ray,
+            ignore=obj_atual
+        )
+
+        em_sombra = False
+        if intersec_sombra is not None:
+            # Luz pontual
+            if hasattr(luz, "posicao"):
+                t_luz = np.linalg.norm(luz.posicao - ponto)
+                if intersec_sombra["t"] < t_luz:
+                    em_sombra = True
+            # Luz spot
+            elif hasattr(luz, "pontoFonte"):
+                t_luz = np.linalg.norm(luz.pontoFonte - ponto)
+                if intersec_sombra["t"] < t_luz:
+                    em_sombra = True
+            # Luz direcional
+            else:
+                em_sombra = True
+
+        if em_sombra:
+            continue
+
+        diff = max(np.dot(normal, l), 0.0)
+
+        r = 2 * np.dot(normal, l) * normal - l
+        r = r / np.linalg.norm(r)
+        spec = max(np.dot(r, view_dir), 0.0) ** m
+        I_total += I_F * (Kd * diff + Ks * spec)
+
+    return np.clip(I_total, 0, 1)
 
 
 def cenario_intersect(listaObjetos, ray, ignore=None):
@@ -64,4 +95,55 @@ def apply_transformation(object, matrix):
 def normalize(v):
     return v / np.linalg.norm(v, axis=-1, keepdims=True)
 
+def render_linhas(args):
+    (
+        i_start, i_end,
+        xx, yy, zz,
+        origem,
+        cenario,
+        luzes,
+        bg_color
+    ) = args
+
+    n_col = xx.shape[1]
+    bloco = np.zeros((i_end - i_start, n_col, 3), dtype=float)
+
+    for ii, i in enumerate(range(i_start, i_end)):
+        for j in range(n_col):
+
+            dir_ray = np.array([xx[i, j], yy[i, j], zz[i, j]]) - origem
+            raio = Ray(origem, dir_ray)
+
+            intersec = cenario_intersect(cenario, raio)
+
+            if intersec is None:
+                bloco[ii, j] = bg_color
+                continue
+
+            P = intersec["ponto"]
+            normal = intersec["normal"]
+            normal = normal / np.linalg.norm(normal)
+
+            view_dir = -raio.direcao
+            view_dir = view_dir / np.linalg.norm(view_dir)
+
+            obj = intersec["obj"]
+
+            I = calcular_iluminacao(
+                ponto=P,
+                normal=normal,
+                view_dir=view_dir,
+                luzes=luzes,
+                obj_atual=obj,
+                objetos=cenario
+            )
+
+            if isinstance(obj, Plano):
+                color = intersec["cor"]
+            else:
+                color = obj.cor
+
+            bloco[ii, j] = np.clip(color * I, 0, 1)
+
+    return i_start, bloco
 

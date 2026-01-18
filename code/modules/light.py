@@ -47,8 +47,10 @@ class LuzDirecional(luz):
         self.direcaoFonte = direcao
 
     def dir_intensi(self, ponto):
-        return self.direcaoFonte, self.intensidade
-     
+        l = -self.direcaoFonte
+        l = l / np.linalg.norm(l)
+        return l, self.intensidade
+ 
 class LuzSpot(luz):
     def __init__(self, intensidade, pontoFonte, direcao, theta):
         """
@@ -56,7 +58,7 @@ class LuzSpot(luz):
         """
         super().__init__(intensidade)
         self.pontoFonte = pontoFonte
-        self.direcaoFonte = direcao
+        self.direcaoFonte = direcao/np.linalg.norm(direcao)
         self.theta = theta #abertura da fonte spot
     
     def dir_intensi(self, ponto):
@@ -65,12 +67,10 @@ class LuzSpot(luz):
         dist = np.linalg.norm(L)
         l = L/dist
 
-        alpha = - np.dot(l, self.direcaoFonte) 
-        cos = np.cos(alpha)
+        cosAlpha = np.dot(l, -self.direcaoFonte) 
         
-        if cos < cos(self.theta):
-            # TODO: checar melhor forma de fazer o retorno quando a luz nao chega la 
-            return l, np.array(([0,0,0])) # regiao nao eh iluminada pela fonte spot
+        if cosAlpha < np.cos(self.theta):
+            return l, np.zeros(3) # regiao nao eh iluminada pela fonte spot
         
-        intensidade = self.intensidade * cos
+        intensidade = self.intensidade * cosAlpha
         return l, intensidade

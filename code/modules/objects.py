@@ -118,13 +118,17 @@ class Plano(SimpleObject):
 
         return tex_color
 
-
-
     def intersect(self, ray:Ray):
         w = ray.origem - self.pontoPi
-        ti = - (np.dot(w,self.normalPlano))/(np.dot(ray.direcao, self.normalPlano))
+        den = (np.dot(ray.direcao, self.normalPlano))
+
+        if abs(den) < 1e-6:
+                    return None  
+
+        ti = - (np.dot(w,self.normalPlano))/den
         if ti < 0:
             return None
+        
         pontoI = ray.origem + ti * ray.direcao
             
         return {"t":ti, 
