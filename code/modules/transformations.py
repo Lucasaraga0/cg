@@ -6,7 +6,7 @@ def translate(PInicial, PFinal):
     deltaY = PFinal[1] - PInicial[1]
     deltaZ = PFinal[2] - PInicial[2]
 
-    matrizT = np.eye(n = 4)
+    matrizT = np.eye(N = 4)
     matrizT[0][3] = deltaX
     matrizT[1][3] = deltaY
     matrizT[2][3] = deltaZ
@@ -19,7 +19,7 @@ def scale(scale):
     scaleY = scale[1]
     scaleZ = scale[2]
 
-    matrizS = np.eye(n = 4)
+    matrizS = np.eye(N = 4)
     matrizS[0][0] = scaleX
     matrizS[1][1] = scaleY
     matrizS[2][2] = scaleZ
@@ -31,7 +31,7 @@ def rotateX(thetaX):
     cos = np.cos(thetaX)
     sin = np.sin(thetaX)
 
-    matrizRot = np.eye(n = 4)
+    matrizRot = np.eye(N = 4)
     matrizRot[1][1] = cos
     matrizRot[1][2] = - sin
     matrizRot[2][1] = sin
@@ -45,7 +45,7 @@ def rotateY(thetaY):
     cos = np.cos(thetaY)
     sin = np.sin(thetaY)
 
-    matrizRot = np.eye(n = 4)
+    matrizRot = np.eye(N = 4)
     matrizRot[0][0] = cos
     matrizRot[0][2] = sin
     matrizRot[2][0] = - sin
@@ -59,7 +59,7 @@ def rotateZ(thetaZ):
     cos = np.cos(thetaZ)
     sin = np.sin(thetaZ)
 
-    matrizRot = np.eye(n = 4)
+    matrizRot = np.eye(N = 4)
     matrizRot[0][0] = cos
     matrizRot[0][1] = -sin
     matrizRot[1][0] = sin
@@ -81,7 +81,7 @@ def shear(gamma1, gamma2= None, plano = "xy", eixo = "y"):
     tan1 = np.tg(gamma1)
     tan2 = np.tg(gamma2)
 
-    matrizC = np.eye(n = 4)
+    matrizC = np.eye(N = 4)
 
     if plano == "xz":
         if eixo == "x":

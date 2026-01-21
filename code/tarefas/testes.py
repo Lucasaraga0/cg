@@ -2,10 +2,11 @@ import numpy as np
 import pygame
 import sys
 import multiprocessing as mp
-from modules.objects import Esfera,Ray, Plano, load_texture
+from modules.objects import Esfera,Ray, Plano, load_texture, Cilindro, Cone
+from modules.complexObjects import Cubo
 from modules.light import LuzPontual, LuzAmbiente, LuzDirecional, LuzSpot
 from modules.utils import render_linhas
-
+from modules.transformations import translate, scale, rotateX
 
 #dimensoes da janela em cm
 Wjanela = 60
@@ -21,6 +22,29 @@ Kd_esf = Ke_esf = Ka_esf = np.array([0.7, 0.2, 0.2])
 m_esf = 10
 
 esfera = Esfera(centro= centro_esf, raio= r_esfera, cor= cor_esf, Kd= Kd_esf, Ks= Ke_esf, Ka= Ka_esf, m = m_esf)
+
+#cilindro 
+centroBaseCil = np.array([0,0,-100])
+raioCil = 20
+HCil = 90
+dCil = np.array([0.,1.,0.])
+KdCil = KeCil =  KaCil = np.array([0.824, 0.706, 0.549])
+corCil = np.array([255,0,0])
+cilindro = Cilindro(centroBase= centroBaseCil,raioBase= raioCil, altura= HCil, vetorDir= dCil, cor= corCil, Kd= KdCil, Ks= KeCil, Ka= KaCil, m = 2)
+
+# cone 
+
+cone = Cone(centroBase= centroBaseCil,raioBase= raioCil, altura= HCil, vetorDir= dCil, cor= corCil, Kd= KdCil, Ks= KeCil, Ka= KaCil, m = 2)
+
+#cubo
+arestaCubo = 40
+centroBaseCubo = centro_esf
+ux = np.array([1,0,0])
+uy = np.array([0,1,0])
+uz = np.array([0,0,1]) 
+KdCubo = KeCubo = KaCubo = Kd_esf
+#cubo = Cubo(tamAresta=arestaCubo, centro_base = centroBaseCubo, ux= ux, uy= uy, uz= uz, cor = cor_esf , Kd= KdCubo, Ks = KeCubo, Ka= KaCubo, m = 10)
+
 
 #plano do chao 
 texturaChao = load_texture("../textures/grass.jpg")
@@ -97,8 +121,11 @@ image = np.zeros((n_lin, n_col, 3), dtype=float)
 origem = np.array([0.0, 0.0, 0.0])
 bg_color = np.array([100, 100, 100], dtype=float) / 255.0
 
-luzes = [luzSpot]
-cenario = [esfera, planoChao, planoFundo]
+luzes = [luzSpot, luzAmbiente]
+
+#testes de transformacao 
+
+cenario = [cone, planoChao, planoFundo]
 
 if __name__ == "__main__":
 

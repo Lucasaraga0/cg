@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 from abc import ABC, abstractmethod
+from modules.transformations import translate
 
 class Ray:
     def __init__(self, origem, direcao):
@@ -15,6 +16,26 @@ class SimpleObject(ABC):
     @abstractmethod
     def intersect(self, ray):
         pass
+
+    @abstractmethod
+    def translateObject(self, matrix):
+        pass
+    
+    @abstractmethod 
+    def rotateObject(self, matrix):
+        pass
+
+    @abstractmethod
+    def scaleObject(self, matrix):
+        pass
+    
+    #@abstractmethod
+    #def shearObject(self, matrix):
+    #    pass
+
+    #@abstractmethod
+    #def reflectObject(self, matrix):
+    #    pass
     
 class Esfera(SimpleObject):
     def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, Ka =0.2 ,m=20):
@@ -54,6 +75,20 @@ class Esfera(SimpleObject):
                 "ponto": ponto, 
                 "normal": normal, 
                 "obj":self}
+
+    def translateObject(self, matrix):
+        pontoInicial = self.centro
+        pontoAplicavel = np.insert(pontoInicial, 3, 1)
+        self.centro = (matrix @ pontoAplicavel)[:3]
+
+    def scaleObject(self, matrix):
+        # so aumenta o raio da esfera
+        self.raio *= matrix[0][0]
+
+    def rotateObject(self, matrix):
+        # rotacionar esfera nao faz nada
+        pass
+
 
 def load_texture(path):
     img = Image.open(path).convert("RGB")
@@ -137,7 +172,27 @@ class Plano(SimpleObject):
                 "cor": self.sample_texture(pontoI),
                 "obj": self}
 
-    
+    def translateObject(self, matrix):
+        pontoAplicavel = np.insert(self.pontoPi, 3, 1)
+        self.pontoPi = (matrix @ pontoAplicavel)[:3]
+
+    def scaleObject(self, matrix):
+        # faz nada pq nn tem sentido escalar um plano
+        pass
+
+    def rotateObject(self, matrix):
+        pontoAplicavel = np.insert(self.pontoPi, 3 , 1)
+        origem = np.zeros(3)
+
+        matriz_ida = translate(PInicial= pontoAplicavel, PFinal= origem)
+        matriz_volta = translate(PInicial = origem, PFinal= pontoAplicavel)
+        # translada pra origem, rotaciona e volta pro ponto original
+        self.pontoPi = (matriz_volta @ matrix @ matriz_ida @ pontoAplicavel)[:3]
+
+        # rotaciona a normal    
+        self.normalPlano = matrix[:3,:3] @ self.normalPlano
+        self.normalPlano /= np.linalg.norm(self.normalPlano)
+
 class Cilindro(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
         self.centroBase = np.array(centroBase)
@@ -201,6 +256,29 @@ class Cilindro(SimpleObject):
             "normal": normal,
             "obj": self
         }
+    
+    def translateObject(self, matrix):
+        pontoAplicavel = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ pontoAplicavel)[:3]
+    
+    def scaleObject(self, matrix):
+        # por questoes de simplicidade deixei a escala uniforme em relacao a todos os eixos
+        escala = matrix[0][0]
+        self.altura *= escala
+        self.raioBase *= escala 
+
+    def rotateObject(self, matrix):
+        pontoAplicavel = np.insert(self.centroBase, 3, 1)
+        origem = np.zeros(3)
+
+        matriz_ida = translate(PInicial= pontoAplicavel, PFinal= origem)
+        matriz_volta = translate(PInicial = origem, PFinal= pontoAplicavel)
+        self.centroBase = (matriz_volta @ matrix @ matriz_ida @ pontoAplicavel)[:3]
+
+        # rotaciona a direcao 
+
+        self.vetorDir = matrix[:3,:3] @ self.centroBase
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
 
     
 class Cone(SimpleObject):
@@ -269,3 +347,25 @@ class Cone(SimpleObject):
             "normal": normal,
             "obj": self
         }
+    
+    def translateObject(self, matrix):
+        pontoAplicavel = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ pontoAplicavel)[:3]
+    
+    def scaleObject(self, matrix):
+        # por questoes de simplicidade deixei a escala uniforme em relacao a todos os eixos
+        escala = matrix[0][0]
+        self.altura *= escala
+        self.raioBase *= escala 
+
+    def rotateObject(self, matrix):
+        pontoAplicavel = np.insert(self.centroBase, 3, 1)
+        origem = np.zeros(3)
+
+        matriz_ida = translate(PInicial= pontoAplicavel, PFinal= origem)
+        matriz_volta = translate(PInicial = origem, PFinal= pontoAplicavel)
+        self.centroBase = (matriz_volta @ matrix @ matriz_ida @ pontoAplicavel)[:3]
+
+        # rotaciona a direcao 
+        self.vetorDir = (matrix)[:3,:3] @ self.centroBase
+        self.vetorDir /= np.linalg.norm(self.vetorDir)

@@ -157,3 +157,13 @@ class Cubo:
                     intersec = hit
 
         return intersec
+
+    def translateObject(self, matrix):
+        pass
+
+    def scaleObject(self, matrix):
+        #so aumenta o tamanho da aresta 
+        pass
+
+    def rotateObject(self, matrix):
+        pass
