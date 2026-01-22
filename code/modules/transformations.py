@@ -67,10 +67,34 @@ def rotateZ(thetaZ):
 
     return matrizRot
 
-def rotateArb():
+def rotateArb(theta, P0, P1):
+
     """retorna a matriz de rotacao em torno de um eixo arbitrario"""
-    #TODO
-    pass
+
+    P0 = np.array(P0, dtype=float)
+    P1 = np.array(P1, dtype=float)
+
+    # vetor eixo
+    eixo = P1 - P0
+    eixo = eixo / np.linalg.norm(eixo)
+
+    ux, uy, uz = eixo
+    cos = np.cos(theta)
+    sin = np.sin(theta)
+    one_c = 1 - cos
+
+    # matriz de Rodrigues 3x3
+    R = np.array([
+        [cos + ux*ux*one_c,     ux*uy*one_c - uz*sin, ux*uz*one_c + uy*sin],
+        [uy*ux*one_c + uz*sin, cos + uy*uy*one_c,     uy*uz*one_c - ux*sin],
+        [uz*ux*one_c - uy*sin, uz*uy*one_c + ux*sin, cos + uz*uz*one_c    ]
+    ])
+
+    R4 = np.eye(N = 4)
+    R4[:3, :3] = R
+
+    return R4
+ 
 
 def shear(gamma1, gamma2= None, plano = "xy", eixo = "y"):
     """retorna a matriz de cisalhamento

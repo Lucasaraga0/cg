@@ -277,7 +277,7 @@ class Cilindro(SimpleObject):
 
         # rotaciona a direcao 
 
-        self.vetorDir = matrix[:3,:3] @ self.centroBase
+        self.vetorDir = matrix[:3,:3] @ self.vetorDir
         self.vetorDir /= np.linalg.norm(self.vetorDir)
 
     
@@ -367,5 +367,5 @@ class Cone(SimpleObject):
         self.centroBase = (matriz_volta @ matrix @ matriz_ida @ pontoAplicavel)[:3]
 
         # rotaciona a direcao 
-        self.vetorDir = (matrix)[:3,:3] @ self.centroBase
+        self.vetorDir = (matrix)[:3,:3] @ self.vetorDir
         self.vetorDir /= np.linalg.norm(self.vetorDir)
