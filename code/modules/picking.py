@@ -28,13 +28,4 @@ def pick_object(mx, my, nx, ny, camera, projecao, cenario):
             t_min = t
             hit = intersec
 
-    # hit já é exatamente no formato que você usa no render:
-    # {
-    #   "t": ...,
-    #   "ponto": ...,
-    #   "normal": ...,
-    #   "obj": ...
-    #   ("cor" no caso do plano)
-    # }
-
     return hit
