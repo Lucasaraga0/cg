@@ -98,21 +98,21 @@ def normalize(v):
 def render_linhas(args):
     (
         i_start, i_end,
-        xx, yy, zz,
-        origem,
+        nx, ny,
+        camera,
+        projecao,
         cenario,
         luzes,
         bg_color
     ) = args
 
-    n_col = xx.shape[1]
-    bloco = np.zeros((i_end - i_start, n_col, 3), dtype=float)
+    bloco = np.zeros((i_end - i_start, nx, 3), dtype=float)
 
     for ii, i in enumerate(range(i_start, i_end)):
-        for j in range(n_col):
+        for j in range(nx):
 
-            dir_ray = np.array([xx[i, j], yy[i, j], zz[i, j]]) - origem
-            raio = Ray(origem, dir_ray)
+            # gera o raio pela projeção
+            raio = projecao.generate_ray(camera, j, i, nx, ny)
 
             intersec = cenario_intersect(cenario, raio)
 
@@ -146,4 +146,5 @@ def render_linhas(args):
             bloco[ii, j] = np.clip(color * I, 0, 1)
 
     return i_start, bloco
+
 
