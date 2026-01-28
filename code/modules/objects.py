@@ -112,7 +112,7 @@ def criar_base_plano(normal):
 
 
 class Plano(SimpleObject):
-    def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1, texture = None, tex_scale = 1.0):
+    def __init__(self, pontoPi, normalPlano, cor, Kd, Ks, Ka, m=1, texture = None, tex_scale = 0.01):
         self.pontoPi = np.array(pontoPi, dtype= float)
         self.normalPlano = np.array(normalPlano)
         self.cor = np.array(cor, dtype=float) / 255.0
@@ -198,7 +198,7 @@ class Cilindro(SimpleObject):
         self.centroBase = np.array(centroBase)
         self.raioBase = raioBase
         self.altura = altura
-        self.vetorDir = np.array(vetorDir)
+        self.vetorDir = np.array(vetorDir, dtype= float)
         self.vetorDir /= np.linalg.norm(self.vetorDir) 
         self.cor = np.array(cor, dtype=float) / 255.0
         self.Kd = Kd
