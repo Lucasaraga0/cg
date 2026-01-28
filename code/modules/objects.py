@@ -29,13 +29,13 @@ class SimpleObject(ABC):
     def scaleObject(self, matrix):
         pass
     
-    #@abstractmethod
-    #def shearObject(self, matrix):
-    #    pass
+    @abstractmethod
+    def shearObject(self, matrix):
+        pass
 
-    #@abstractmethod
-    #def reflectObject(self, matrix):
-    #    pass
+    @abstractmethod
+    def reflectObject(self, matrix):
+        pass
     
 class Esfera(SimpleObject):
     def __init__(self, centro, raio, cor, Kd=0.7, Ks=0.3, Ka =0.2 ,m=20):
@@ -89,6 +89,13 @@ class Esfera(SimpleObject):
         # rotacionar esfera nao faz nada
         pass
 
+    def shearObject(self, matrix):
+        # cisalhar esfera nao faz sentido 
+        pass
+    
+    def reflectObject(self, matrix):
+        pontoAplicavel = np.insert(self.centro, 3, 1)
+        self.centro = (matrix @ pontoAplicavel)[:3]
 
 def load_texture(path):
     img = Image.open(path).convert("RGB")
@@ -193,6 +200,29 @@ class Plano(SimpleObject):
         self.normalPlano = matrix[:3,:3] @ self.normalPlano
         self.normalPlano /= np.linalg.norm(self.normalPlano)
 
+    def shearObject(self, git amatrix):
+        pontoAplicavel = np.insert(self.pontoPi, 3, 1)
+        origem = np.zeros(3)
+
+        matriz_ida = translate(PInicial=pontoAplicavel, PFinal=origem)
+        matriz_volta = translate(PInicial=origem, PFinal=pontoAplicavel)
+        self.pontoPi = (matriz_volta @ matrix @ matriz_ida @ pontoAplicavel)[:3]
+
+        # normal usando inversa transposta
+        A = matrix[:3, :3]
+        self.normalPlano = np.linalg.inv(A).T @ self.normalPlano
+        self.normalPlano /= np.linalg.norm(self.normalPlano)
+
+    def reflectObject(self, matrix):
+        # ponto do plano
+        pontoAplicavel = np.insert(self.pontoPi, 3, 1)
+        self.pontoPi = (matrix @ pontoAplicavel)[:3]
+
+        # normal do plano
+        A = matrix[:3, :3]
+        self.normalPlano = A @ self.normalPlano
+        self.normalPlano /= np.linalg.norm(self.normalPlano)
+
 class Cilindro(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
         self.centroBase = np.array(centroBase)
@@ -280,7 +310,27 @@ class Cilindro(SimpleObject):
         self.vetorDir = matrix[:3,:3] @ self.vetorDir
         self.vetorDir /= np.linalg.norm(self.vetorDir)
 
-    
+    def shearObject(self, matrix):
+        # ponto base
+        p = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ p)[:3]
+
+        # direção
+        A = matrix[:3,:3]
+        self.vetorDir = A @ self.vetorDir
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
+
+    def reflectObject(self, matrix):
+        # ponto base
+        p_h = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ p_h)[:3]
+
+        # direção
+        A = matrix[:3, :3]
+        self.vetorDir = A @ self.vetorDir
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
+
+        
 class Cone(SimpleObject):
     def __init__(self, centroBase, raioBase, altura, vetorDir, cor, Kd, Ks, Ka, m):
         self.centroBase = np.array(centroBase, dtype = float)
@@ -368,4 +418,24 @@ class Cone(SimpleObject):
 
         # rotaciona a direcao 
         self.vetorDir = (matrix)[:3,:3] @ self.vetorDir
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
+
+    def shearObject(self, matrix):
+        # ponto base
+        p = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ p)[:3]
+
+        # direção
+        A = matrix[:3,:3]
+        self.vetorDir = A @ self.vetorDir
+        self.vetorDir /= np.linalg.norm(self.vetorDir)
+
+    def reflectObject(self, matrix):
+        # ponto base
+        p_h = np.insert(self.centroBase, 3, 1)
+        self.centroBase = (matrix @ p_h)[:3]
+
+        # direção
+        A = matrix[:3, :3]
+        self.vetorDir = A @ self.vetorDir
         self.vetorDir /= np.linalg.norm(self.vetorDir)

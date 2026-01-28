@@ -96,26 +96,20 @@ def rotateArb(theta, P0, P1):
     return R4
  
 
-def shear(gamma1, gamma2= None, plano = "xy", eixo = "y"):
+def shear(gamma1, plano = "xy", eixo = "y"):
     """retorna a matriz de cisalhamento
 
     cisalhamento de um plano (str) em relacao a um eixo (str)
     """
-    # TODO: plano yz e xz em relacao a eixos arbitrarios
-    tan1 = np.tg(gamma1)
-    tan2 = np.tg(gamma2)
+    tan1 = np.tan(gamma1)
 
     matrizC = np.eye(N = 4)
 
-    if plano == "xz":
+    if plano == "xy":
         if eixo == "x":
-            matrizC[0][3] = tan1
+            matrizC[0][1] = tan1
         elif eixo == "y":
             matrizC[1][0] = tan1
-        else:
-        # em relacao a um eixo arbitrario
-            matrizC[0][2] = tan1 #tan(gammaX)
-            matrizC[1][2] = tan2 #tan(gammaY) 
 
     elif plano == "xz":
         if eixo == "x":
@@ -130,11 +124,17 @@ def shear(gamma1, gamma2= None, plano = "xy", eixo = "y"):
             matrizC[1][2] = tan1
         elif eixo == "z":
             matrizC[2][1] = tan1
-        else:
-            pass
-    
+
     return matrizC
 
-def reflect():
-    #TODO
-    pass
+def reflect(plano):
+    matrizF = np.eye(4)
+
+    if plano == "xz":
+        matrizF[1][1] = -1
+    elif plano == "yz":
+        matrizF[0][0] = -1
+    elif plano == "xy":
+        matrizF[2][2] = -1
+    
+    return matrizF

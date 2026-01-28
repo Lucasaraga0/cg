@@ -1,8 +1,7 @@
 import pygame
 import numpy as np
 
-from modules.transformations import translate, rotateX, rotateY, rotateZ, rotateArb, scale
-from modules.camera import Projecao
+from modules.transformations import translate, rotateX, rotateY, rotateZ, rotateArb, scale, shear, reflect
 
 import numpy as np
 
@@ -219,11 +218,48 @@ class EditorController:
         print("Rotação aplicada com sucesso.")
         self.needs_render = True
 
+    def apply_shear(self):
+
+        print("\n--- Cisalhamento ---")
+
+        plano = input("Plano (xy/xz/yz): ").lower()
+        eixo  = input("Eixo (x/y/z): ").lower()
+
+        g1 = float(input("Gamma1 (graus): "))
+
+        # converte para radianos
+        g1 = np.deg2rad(g1)
+
+        # matriz shear
+        Sh = shear(g1, plano=plano, eixo=eixo)
+
+        # aplica no objeto selecionado
+        self.selected_obj.shearObject(Sh)
+
+        print("Cisalhamento aplicado.")
+        self.needs_render = True
+
+    def apply_reflection(self):
+
+        plano = input("Plano de reflexao (xy / xz / yz): ").lower()
+
+        if plano not in ["xy", "xz", "yz"]:
+            print("Plano invalido.")
+            return
+
+        F = reflect(plano)
+
+        self.selected_obj.reflectObject(F)
+
+        print("Reflexao aplicada.")
+        self.needs_render = True
+
+
     def handle_key(self, key):
         if self.selected_obj is None:
             return
 
-        if key == pygame.K_g:
+        if key == pygame.K_t:
             self.apply_translate()
 
         elif key == pygame.K_s:
@@ -231,24 +267,40 @@ class EditorController:
 
         elif key == pygame.K_r:
             self.apply_rotation()
+        
+        elif key == pygame.K_h:
+            self.apply_shear()
+
+        elif key == pygame.K_f:
+            self.apply_reflection()
+
         elif key == pygame.K_DELETE or key == pygame.K_BACKSPACE:
             self.delete_selected()
 
     def draw_overlay(self, screen):
+
         font = pygame.font.SysFont("Arial", 18)
 
-        # Painel
-        pygame.draw.rect(screen, (30, 30, 30), (10, 10, 260, 120))
-        pygame.draw.rect(screen, (200, 200, 200), (10, 10, 260, 120), 2)
+        # Painel maior
+        pygame.draw.rect(screen, (30, 30, 30), (10, 10, 260, 170))
+        pygame.draw.rect(screen, (200, 200, 200), (10, 10, 260, 170), 2)
 
-        # Texto
+        # Texto de seleção
         if self.selected_obj is None:
             txt = "Nenhum objeto selecionado"
         else:
             txt = f"Selecionado: {type(self.selected_obj).__name__}"
 
         screen.blit(font.render(txt, True, (255, 255, 255)), (20, 20))
-        screen.blit(font.render("G = mover", True, (200, 200, 200)), (20, 50))
-        screen.blit(font.render("R = rotacionar", True, (200, 200, 200)), (20, 70))
-        screen.blit(font.render("S = escala", True, (200, 200, 200)), (20, 90))
-        screen.blit(font.render("DEL = remover", True, (200, 200, 200)), (20, 110))
+
+        # Controles
+        y0 = 50
+        dy = 20
+
+        screen.blit(font.render("T = transladar",      True, (200, 200, 200)), (20, y0))
+        screen.blit(font.render("R = rotacionar", True, (200, 200, 200)), (20, y0 + dy))
+        screen.blit(font.render("S = escala",     True, (200, 200, 200)), (20, y0 + 2*dy))
+        screen.blit(font.render("H = cisalhar",   True, (200, 200, 200)), (20, y0 + 3*dy))
+        screen.blit(font.render("F = refletir",   True, (200, 200, 200)), (20, y0 + 4*dy))
+        screen.blit(font.render("DEL = remover",  True, (200, 200, 200)), (20, y0 + 5*dy))
+

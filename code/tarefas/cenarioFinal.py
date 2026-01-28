@@ -95,7 +95,7 @@ texturaParede = load_texture("../textures/brick_wall.jpg")
 texturaTeto = load_texture("../textures/wood_floor.jpg")
 # quarto com texturas
 quarto = criar_quarto(
-    W=500, H=300, D=400,
+    W=300, H=300, D=300,
     textura_paredes=texturaParede,
     textura_chao=texturaChao,
     textura_teto= texturaTeto
@@ -113,7 +113,7 @@ base_snowman = np.array([
 ])
 
 
-arvore = (criar_arvore_natal())   
+arvore = (criar_arvore_natal(pos_x= 70, pos_z= 90))   
 puff = criar_puff(base_pos= base_puff)
 snow_men = criar_snowman(base_pos= base_snowman)
 

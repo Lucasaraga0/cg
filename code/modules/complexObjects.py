@@ -217,3 +217,44 @@ class Cubo:
         # atualiza centro
         c_h = np.insert(self.centro, 3, 1)
         self.centro = (matriz_volta @ matrix @ matriz_ida @ c_h)[:3]
+
+    def shearObject(self, matrix):
+        origem = np.zeros(3)
+
+        # matrizes de ida e volta (shear em torno do centro)
+        matriz_ida   = translate(self.centro, origem)
+        matriz_volta = translate(origem, self.centro)
+
+        novos_vertices = []
+
+        # aplica shear em todos os vértices
+        for v in self.vertices:
+            v_h = np.insert(v, 3, 1)
+
+            v_s = matriz_volta @ matrix @ matriz_ida @ v_h
+
+            novos_vertices.append(v_s[:3])
+
+        self.vertices = novos_vertices
+
+        c_h = np.insert(self.centro, 3, 1)
+        self.centro = (matriz_volta @ matrix @ matriz_ida @ c_h)[:3]
+
+
+    def reflectObject(self, matrix):
+        origem = np.zeros(3)
+
+        matriz_ida   = translate(self.centro, origem)
+        matriz_volta = translate(origem, self.centro)
+
+        novos_vertices = []
+        for v in self.vertices:
+            v_h = np.insert(v, 3, 1)
+            v_r = matriz_volta @ matrix @ matriz_ida @ v_h
+            novos_vertices.append(v_r[:3])
+
+        self.vertices = novos_vertices
+
+        # centro
+        c_h = np.insert(self.centro, 3, 1)
+        self.centro = (matriz_volta @ matrix @ matriz_ida @ c_h)[:3]
