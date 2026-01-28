@@ -6,7 +6,6 @@ import numpy as np
 from modules.objects import Esfera, Plano, Cilindro, Cone
 from modules.complexObjects import Cubo
 
-
 # ============================================================
 # QUARTO (6 PLANOS)
 # ============================================================
@@ -115,11 +114,7 @@ def criar_arvore_natal(pos_x=70, pos_z=30):
 
     return objetos
 
-
-# ============================================================
 # PUFF (CUBO ROXO)
-# ============================================================
-
 def criar_puff(base_pos = [], tam=30):
 
     puff = Cubo(
@@ -135,10 +130,7 @@ def criar_puff(base_pos = [], tam=30):
 
     return [puff]
 
-
-# ============================================================
 # SNOWMAN (3 ESFERAS + 2 OLHOS + 1 CONE)
-# ============================================================
 
 def criar_snowman(base_pos):
 

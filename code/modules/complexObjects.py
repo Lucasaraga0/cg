@@ -12,7 +12,7 @@ class Triangulo:
         self.i1 = i1
         self.i2 = i2
 
-        self.cor = np.array(cor, dtype=float) / 255.0
+        self.cor = cor
         self.Kd = Kd
         self.Ks = Ks
         self.Ka = Ka
@@ -51,7 +51,7 @@ class Triangulo:
         return { "t": tI,
                 "ponto": pI,
                 "normal" : n,
-                "obj": self
+                "obj": self.cubo
         }
 
 class Face:
@@ -89,7 +89,7 @@ class Cubo:
         """
 
         self.a = tamAresta
-        self.cor = cor
+        self.cor = np.array(cor, dtype=float) / 255.0
         self.Kd = Kd
         self.Ks = Ks
         self.Ka = Ka

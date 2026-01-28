@@ -7,11 +7,18 @@ class Camera:
         self.AtPoint = np.array(AtPoint, dtype=float)
         self.UpPoint = np.array(UpPoint, dtype=float)
 
-        # Base da camera
+        self.update_basis()
+
+    def update_basis(self):
+        """
+        Recalcula u,v,w sempre que Eye/At/Up mudar
+        """
         self.w = self.posicao - self.AtPoint
         self.w = self.w / np.linalg.norm(self.w)
+
         self.u = np.cross(self.UpPoint, self.w)
         self.u = self.u / np.linalg.norm(self.u)
+
         self.v = np.cross(self.w, self.u)
 
     def world_to_camera(self, p):
@@ -24,48 +31,49 @@ class Camera:
             np.dot(d, self.v),
             np.dot(d, self.w)
         ])
-
-class ProjecaoPerspectiva:
-    def __init__(self, fov, aspect_ratio):
-        self.fov = fov              # em radianos
+    
+class Projecao:
+    def __init__(self, fov, aspect_ratio, focal=1.0):
         self.aspect = aspect_ratio
+        self.focal = focal
 
-        self.h = np.tan(fov / 2)
-        self.w = self.h * aspect_ratio
+        # perspectiva
+        self.set_fov(fov)
 
-    def generate_ray(self, camera: Camera, i, j, nx, ny):
-        """
-        Gera raio passando pelo pixel (i,j)
-        """
+        # ortográfica (default grande)
+        self.ortho = False
+        self.ortho_width  = 300.0
+        self.ortho_height = 300.0
 
-        # coordenadas normalizadas do pixel [-1,1]
-        px = (2 * (i + 0.5) / nx - 1) * self.w
-        py = (1 - 2 * (j + 0.5) / ny) * self.h
+    def set_fov(self, fov):
+        self.fov = fov
+        self.persp_h = np.tan(fov / 2)
+        self.persp_w = self.persp_h * self.aspect
 
-        # ponto no plano de imagem em coords de câmera
-        p_cam = px * camera.u + py * camera.v - camera.w
+    def set_ortho_size(self, width, height):
+        self.ortho_width = width
+        self.ortho_height = height
 
-        origem = camera.posicao
-        direcao = p_cam / np.linalg.norm(p_cam)
+    def set_ortho(self, state=True):
+        self.ortho = state
 
-        return Ray(origem, direcao)
+    def generate_ray(self, camera, i, j, nx, ny):
 
-class ProjecaoOrtografica:
-    def __init__(self, largura, altura):
-        self.largura = largura
-        self.altura = altura
+        if self.ortho:
+            # escala ortográfica independente
+            px = (2 * (i + 0.5) / nx - 1) * (self.ortho_width / 2)
+            py = (1 - 2 * (j + 0.5) / ny) * (self.ortho_height / 2)
 
-    def generate_ray(self, camera: Camera, i, j, nx, ny):
+            origem = camera.posicao + px * camera.u + py * camera.v
+            direcao = -camera.w
+            return Ray(origem, direcao)
 
-        px = (2 * (i + 0.5) / nx - 1) * self.largura
-        py = (1 - 2 * (j + 0.5) / ny) * self.altura
+        else:
+            # perspectiva normal
+            px = (2 * (i + 0.5) / nx - 1) * self.persp_w
+            py = (1 - 2 * (j + 0.5) / ny) * self.persp_h
 
-        origem = (
-            camera.posicao
-            + px * camera.u
-            + py * camera.v
-        )
+            p_cam = px * camera.u + py * camera.v - self.focal * camera.w
+            direcao = p_cam / np.linalg.norm(p_cam)
 
-        direcao = -camera.w   # todos paralelos
-
-        return Ray(origem, direcao)
+            return Ray(camera.posicao, direcao)

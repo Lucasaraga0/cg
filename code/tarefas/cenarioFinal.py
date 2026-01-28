@@ -4,12 +4,51 @@ import sys
 import multiprocessing as mp
 
 from modules.objetosProntos import criar_quarto, criar_arvore_natal, criar_puff, criar_snowman
-from modules.transformations import translate, scale, rotateX
-from modules.camera import Camera, ProjecaoPerspectiva   
+from modules.camera import Camera, Projecao
 from modules.picking import pick_object
 from modules.objects import load_texture
 from modules.light import LuzPontual, LuzAmbiente, LuzDirecional, LuzSpot
 from modules.utils import render_linhas
+from modules.editor import EditorController, menu_camera, menu_projecao
+
+def render_scene_mp(pool, camera, projecao, cenarioObjs, luzes, bg_color,
+                    n_col, n_lin, image):
+    image.fill(0)
+    num_processos = mp.cpu_count()
+    linhas_por_proc = n_lin // num_processos
+
+    tasks = []
+
+    for p in range(num_processos):
+        i_start = p * linhas_por_proc
+        i_end = n_lin if p == num_processos - 1 else (p + 1) * linhas_por_proc
+
+        tasks.append((
+            i_start, i_end,
+            n_col, n_lin,
+            camera,
+            projecao,
+            cenarioObjs,
+            luzes,
+            bg_color
+        ))
+
+    # multiprocessing render
+    resultados = pool.map(render_linhas, tasks)
+
+    # junta blocos na imagem final
+    for i_start, bloco in resultados:
+        image[i_start:i_start + bloco.shape[0], :, :] = bloco
+
+    # converte para uint8
+    img_uint8 = (image * 255).astype(np.uint8)
+
+    # gera surface pygame
+    surface = pygame.surfarray.make_surface(
+        np.flipud(np.rot90(img_uint8))
+    )
+
+    return surface
 
 # ----------------------------
 # Dimensões da janela em cm
@@ -41,22 +80,25 @@ camera = Camera(
 fov = np.deg2rad(60.0)
 aspect_ratio = n_col / n_lin
 
-projecao = ProjecaoPerspectiva(
+projecao = Projecao(
     fov=fov,
     aspect_ratio=aspect_ratio
 )
+#projecao.ortho = True
 
 # ----------------------------
 # TEXTURAS E QUARTO
 # ----------------------------
+
 texturaChao = load_texture("../textures/grass.jpg")
 texturaParede = load_texture("../textures/brick_wall.jpg")
-
+texturaTeto = load_texture("../textures/wood_floor.jpg")
 # quarto com texturas
 quarto = criar_quarto(
-    W=300, H=200, D=300,
+    W=500, H=300, D=400,
     textura_paredes=texturaParede,
     textura_chao=texturaChao,
+    textura_teto= texturaTeto
 )
 
 # ----------------------------
@@ -72,20 +114,18 @@ base_snowman = np.array([
 
 
 arvore = (criar_arvore_natal())   
-#puff = criar_puff(base_pos= base_puff)
+puff = criar_puff(base_pos= base_puff)
 snow_men = criar_snowman(base_pos= base_snowman)
 
-cenario = [quarto, arvore, snow_men]
+cenario = [quarto,puff, arvore, snow_men]
 cenarioObjs = []
 for bigObj in cenario:
     for obj in bigObj:
-        #print(type(obj))
         cenarioObjs.append(obj)
 
-#print("fim")
 
 # ----------------------------
-# LUZES (coerentes com o quarto)
+# LUZES 
 # ----------------------------
 
 # luz ambiente
@@ -113,89 +153,122 @@ luzes = [luzAmbiente, luzPontual, luzSpot]
 
 bg_color = np.array([100, 100, 100], dtype=float) / 255.0
 
-# ----------------------------
-# PYGAME
-# ----------------------------
 
-pygame.init()
-window = pygame.display.set_mode((window_w, window_h))
-pygame.display.set_caption("Natal do snow man'")
-clock = pygame.time.Clock()
-
-image = np.zeros((n_lin, n_col, 3), dtype=float)
-
-# ----------------------------
-# MULTIPROCESSAMENTO
-# ----------------------------
 if __name__ == "__main__":
 
-    num_processos = mp.cpu_count()
-    linhas_por_proc = n_lin // num_processos
+    mp.freeze_support()
 
-    tasks = []
+    # ----------------------------
+    # PYGAME
+    # ----------------------------
 
-    for p in range(num_processos):
-        i_start = p * linhas_por_proc
-        i_end = n_lin if p == num_processos - 1 else (p + 1) * linhas_por_proc
+    pygame.init()
+    window = pygame.display.set_mode((window_w, window_h))
+    pygame.display.set_caption("Natal do snow man")
+    clock = pygame.time.Clock()
+    
+    # ----------------------------
+    # cria editor
+    # ----------------------------
+    editor = EditorController(cenarioObjs)
+    editor.needs_render = False
 
-        tasks.append((
-            i_start, i_end,
+    # ----------------------------
+    # buffer da imagem global
+    # ----------------------------
+    image = np.zeros((n_lin, n_col, 3), dtype=float)
+
+    # ----------------------------
+    # cria Pool UMA vez só
+    # ----------------------------
+    with mp.Pool(mp.cpu_count()) as pool:
+
+        # primeira renderização
+        surface = render_scene_mp(
+            pool,
+            camera, projecao,
+            cenarioObjs, luzes,
+            bg_color,
             n_col, n_lin,
-            camera,
-            projecao,
-            cenarioObjs,
-            luzes,
-            bg_color
-        ))
+            image
+        )
 
-    with mp.Pool(processes=num_processos) as pool:
-        resultados = pool.map(render_linhas, tasks)
+        running = True
+        while running:
 
-    # junta os blocos na imagem final
-    for i_start, bloco in resultados:
-        image[i_start:i_start + bloco.shape[0], :, :] = bloco
+            for event in pygame.event.get():
 
-    image = (image * 255).astype(np.uint8)
-    surface = pygame.surfarray.make_surface(np.flipud(np.rot90(image)))
+                if event.type == pygame.QUIT:
+                    running = False
 
-    running = True
-    while running:
+                # ============================
+                # Clique → Picking
+                # ============================
+                if event.type == pygame.MOUSEBUTTONDOWN:
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+                    mx, my = pygame.mouse.get_pos()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mx, my = pygame.mouse.get_pos()
+                    ix = int(mx / window_w * n_col)
+                    iy = int(my / window_h * n_lin)
 
-                # converter coords da janela para coords da imagem
-                ix = int(mx / window_w * n_col)
-                iy = int(my / window_h * n_lin)
+                    hit = pick_object(
+                        ix, iy,
+                        n_col, n_lin,
+                        camera,
+                        projecao,
+                        cenarioObjs
+                    )
 
-                hit = pick_object(
-                    ix, iy,
+                    editor.select_object(hit)
+
+                # ============================
+                # Teclado → Transformações
+                # ============================
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_c:
+                        camera, changed = menu_camera(camera)
+                        if changed:
+                            editor.needs_render = True
+                    elif event.key == pygame.K_p:
+                        projecao, changed = menu_projecao(projecao)
+                        if changed:
+                            editor.needs_render = True
+                    
+                    else:
+                        editor.handle_key(event.key)
+
+            # ============================
+            # Render sob demanda
+            # ============================
+            if editor.needs_render:
+                print("\nRenderizando cena novamente...\n")
+
+                surface = render_scene_mp(
+                    pool,
+                    camera, projecao,
+                    cenarioObjs, luzes,
+                    bg_color,
                     n_col, n_lin,
-                    camera,
-                    projecao,
-                    cenarioObjs
+                    image
                 )
 
-                if hit is not None:
-                    print("\n=== PICK ===")
-                    print("Objeto:", type(hit["obj"]).__name__)
-                    print("t:", hit["t"])
-                    print("Ponto:", hit["ponto"])
-                    print("Normal:", hit["normal"])
+                editor.needs_render = False
 
-                    if "cor" in hit:
-                        print("Cor (plano/textura):", hit["cor"])
-                else:
-                    print("\n=== PICK ===")
-                    print("Nenhum objeto selecionado")
+            # ============================
+            # Draw normal
+            # ============================
+            window.blit(
+                pygame.transform.scale(surface, (window_w, window_h)),
+                (0, 0)
+            )
 
-        window.blit(pygame.transform.scale(surface, (window_w, window_h)), (0, 0))
-        pygame.display.flip()
-        clock.tick(60)
+            # Overlay UI
+            editor.draw_overlay(window)
+
+            pygame.display.flip()
+            clock.tick(60)
 
     pygame.quit()
     sys.exit()
+
+
